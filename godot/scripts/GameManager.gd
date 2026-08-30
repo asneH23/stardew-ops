@@ -48,7 +48,15 @@ func _on_state_updated(state: Dictionary) -> void:
 		spawn_floating_xp(gained)
 		
 		# SPELA UPP ETT LJUD DIREKT I MAC OS
-		OS.execute("afplay", ["/System/Library/Sounds/Glass.aiff"], [])
+		var audio_output = []
+		var audio_code = OS.execute("/usr/bin/afplay", ["/System/Library/Sounds/Ping.aiff"], audio_output)
+		print("[Ljud] Exit code: ", audio_code, " Output: ", audio_output)
+		
+		# NATIVE MAC OS NOTIFICATION
+		var output = []
+
+		var apple_script = 'display notification "Du fick +%d XP!" with title "Stardew-Ops 🤖" subtitle "Gemini har analyserat din kod!"' % gained
+		var exit_code = OS.execute("/usr/bin/osascript", ["-e", apple_script], output)
 		
 	last_known_xp = total_xp
 
