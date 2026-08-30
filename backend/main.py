@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import json
 from contextlib import asynccontextmanager
+from quest_engine import generate_quests, check_quest_completion, complete_quest, reroll_single_quest
+
 from datetime import datetime
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -263,16 +265,19 @@ def fake_commit(body: FakeCommitRequest, session: Session = Depends(get_session)
 
 
 @app.post("/quests/reroll", tags=["Game"])
-def reroll_quests(session: Session = Depends(get_session)):
-    """Genererar 3 nya quests. Gamla markeras som 'rerolled'."""
+def reroll_all_quests(session: Session = Depends(get_session)):
     state = get_or_create_state(session)
     new_quests = generate_quests(session, state.current_course_id)
+    return {"message": "Quests rerolled!"}
+
+@app.post("/quests/reroll/{slot}", tags=["Game"])
+def reroll_specific_quest(slot: int, session: Session = Depends(get_session)):
+    """Rerollar en specifik quest slot."""
+    state = get_or_create_state(session)
+    new_quest = reroll_single_quest(session, state.current_course_id, slot)
     return {
-        "message": "Quest Board uppdaterad! 🎲",
-        "quests": [
-            {"slot": q.slot, "title": q.title, "xp_reward": q.xp_reward}
-            for q in new_quests
-        ],
+        "message": f"Quest slot {slot} uppdaterad! 🎲",
+        "quest": {"slot": new_quest.slot, "title": new_quest.title, "xp_reward": new_quest.xp_reward}
     }
 
 

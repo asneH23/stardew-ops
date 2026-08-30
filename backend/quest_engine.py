@@ -131,3 +131,38 @@ def complete_quest(session: Session, quest: Quest) -> None:
     quest.completed_at = datetime.utcnow()
     session.add(quest)
     session.commit()
+
+def reroll_single_quest(session: Session, course_id: str, slot: int) -> Quest:
+    """Rerollar en specifik quest slot och behåller de andra."""
+    # Markera aktiv quest på denna slot som rerolled
+    old_quest = session.exec(
+        select(Quest).where(Quest.status == QuestStatus.ACTIVE, Quest.slot == slot)
+    ).first()
+    if old_quest:
+        old_quest.status = QuestStatus.REROLLED
+        session.add(old_quest)
+        
+    templates = get_templates_for_course(course_id)
+    slot_templates = [t for t in templates if t[0] == slot]
+    if not slot_templates:
+        slot_templates = [(slot, f"Slot {slot} Quest", f"Öva på {course_id}-relaterade uppgifter.", slot * 50, slot * 20)]
+        
+    # Filtrera bort den gamla så man inte får samma igen (om det finns alternativ)
+    options = [t for t in slot_templates if not old_quest or t[1] != old_quest.title]
+    if not options:
+        options = slot_templates
+        
+    chosen = random.choice(options)
+    new_quest = Quest(
+        slot=chosen[0],
+        title=chosen[1],
+        description=chosen[2],
+        xp_reward=chosen[3],
+        bonus_xp=chosen[4],
+        course_id=course_id,
+        status=QuestStatus.ACTIVE,
+    )
+    session.add(new_quest)
+    session.commit()
+    session.refresh(new_quest)
+    return new_quest
