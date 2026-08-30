@@ -46,7 +46,9 @@ func _on_state_updated(state: Dictionary) -> void:
 		
 		# NATIVE MAC OS NOTIFICATION
 		var apple_script = 'display notification "Du fick +%d XP!" with title "Stardew-Ops 🤖" subtitle "Gemini har analyserat din kod!"' % gained
-		OS.execute("osascript", ["-e", apple_script], [])
+		var output = []
+		var exit_code = OS.execute("/usr/bin/osascript", ["-e", apple_script], output)
+		print("[Notis] Mac OS Exit Code: ", exit_code, " | Output: ", output)
 		
 	last_known_xp = total_xp
 
