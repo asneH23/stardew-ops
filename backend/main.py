@@ -9,6 +9,13 @@ Endpoints:
   POST /quests/reroll   — Generera 3 nya quests
 """
 
+import sys
+import os
+
+# Lägg till backend/-mappen i Python-sökvägen så att imports fungerar
+# oavsett var uvicorn startas ifrån (lokalt eller på Railway).
+sys.path.insert(0, os.path.dirname(__file__))
+
 import json
 from contextlib import asynccontextmanager
 from datetime import datetime
