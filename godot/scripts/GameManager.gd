@@ -8,8 +8,8 @@ extends Node2D
 @onready var progress_label: Label = $UI/ProgressLabel
 @onready var commits_label: Label = $UI/CommitsLabel
 @onready var status_label: Label = $StatusLabel
-@onready var player: CharacterBody2D = $"../Player"
-@onready var crops_node: Node2D = $"../Crops"
+@onready var player: CharacterBody2D = $Player
+@onready var crops_node: Node2D = $Crops
 
 @onready var quest1_label: Label = $UI/Quest1Label
 @onready var quest2_label: Label = $UI/Quest2Label
