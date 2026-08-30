@@ -30,6 +30,9 @@ func _ready() -> void:
 	btn_reroll_2.pressed.connect(func(): _on_reroll_pressed(2, btn_reroll_2))
 	btn_reroll_3.pressed.connect(func(): _on_reroll_pressed(3, btn_reroll_3))
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
+		$UI.visible = not $UI.visible
 
 func _on_reroll_pressed(slot: int, btn: Button) -> void:
 	btn.text = "⏳"
