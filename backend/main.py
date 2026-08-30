@@ -317,3 +317,18 @@ def debug_ai():
         return {"success": True, "response": resp.text.strip(), "key_start": key[:4]}
     except Exception as e:
         return {"error": str(e), "key_start": key[:4]}
+
+@app.get("/debug-models", tags=["Dev"])
+def debug_models():
+    import os
+    import google.generativeai as genai
+    key = os.getenv("GEMINI_API_KEY")
+    if not key:
+        return {"error": "Ingen nyckel"}
+    
+    try:
+        genai.configure(api_key=key)
+        models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        return {"success": True, "models": models}
+    except Exception as e:
+        return {"error": str(e)}
