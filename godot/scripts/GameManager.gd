@@ -44,6 +44,10 @@ func _on_state_updated(state: Dictionary) -> void:
 		var gained = total_xp - last_known_xp
 		spawn_floating_xp(gained)
 		
+		# NATIVE MAC OS NOTIFICATION
+		var apple_script = 'display notification "Du fick +%d XP!" with title "Stardew-Ops 🤖" subtitle "Gemini har analyserat din kod!"' % gained
+		OS.execute("osascript", ["-e", apple_script], [])
+		
 	last_known_xp = total_xp
 
 	xp_label.text = "⭐ Total XP: %d" % total_xp
@@ -97,20 +101,17 @@ func spawn_floating_xp(amount: int) -> void:
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	label.add_theme_constant_override("outline_size", 8)
 	
-	# Startposition (ungefär där Progress Baren är)
 	label.position = Vector2(400, 180)
 	$UI.add_child(label)
 	
-	# Skapa en Tween för att flytta den uppåt och tona ut den
 	var tween = get_tree().create_tween().set_parallel(true)
 	
-	# Åk uppåt 100 pixlar under 1.5 sekunder
-	tween.tween_property(label, "position:y", label.position.y - 100, 1.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Långsammare animation: 4 sekunder och flyger dubbelt så högt upp (200 px)
+	tween.tween_property(label, "position:y", label.position.y - 200, 4.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
-	# Bli genomskinlig
-	tween.tween_property(label, "modulate:a", 0.0, 1.5).set_trans(Tween.TRANS_LINEAR)
+	# Börja tona ut sakta över 4 sekunder
+	tween.tween_property(label, "modulate:a", 0.0, 4.0).set_trans(Tween.TRANS_LINEAR)
 	
-	# När animationen är klar, ta bort text-noden (efter 1.5s)
 	tween.chain().tween_callback(label.queue_free)
 
 func _on_connection_error(message: String) -> void:
