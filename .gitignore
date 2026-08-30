@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Database
+*.db
+*.sqlite3
+
+# Miljövariabler
+.env
+
+# Godot
+godot/.godot/
+godot/export/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
