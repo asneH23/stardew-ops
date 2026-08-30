@@ -12,9 +12,11 @@ config/icon="res://icon.svg"
 
 [display]
 
-window/size/viewport_width=1000
-window/size/viewport_height=700
+window/size/viewport_width=1200
+window/size/viewport_height=800
 window/size/resizable=true
+window/dpi/allow_hidpi=true
+window/stretch/mode="canvas_items"
 
 [rendering]
 
