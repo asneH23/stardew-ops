@@ -17,6 +17,7 @@ extends Node2D
 @onready var btn_reroll_2: Button = $UI/BtnReroll2
 @onready var btn_reroll_3: Button = $UI/BtnReroll3
 
+var last_known_xp: int = -1
 
 func _ready() -> void:
 	api_client.state_updated.connect(_on_state_updated)
@@ -37,6 +38,14 @@ func _on_state_updated(state: Dictionary) -> void:
 	status_label.text = "✅ Ansluten  |  Uppdateras var 10:e sekund"
 
 	var total_xp: int = state.get("total_xp", 0)
+	
+	# DOPAMIN-ANIMATION: Om XP har ökat, skapa en svävande text!
+	if last_known_xp != -1 and total_xp > last_known_xp:
+		var gained = total_xp - last_known_xp
+		spawn_floating_xp(gained)
+		
+	last_known_xp = total_xp
+
 	xp_label.text = "⭐ Total XP: %d" % total_xp
 	
 	var level: int = state.get("level", 1)
@@ -47,9 +56,14 @@ func _on_state_updated(state: Dictionary) -> void:
 
 	var xp_earned: int = state.get("current_course_xp_earned", 0)
 	var xp_total: int = state.get("current_course_xp_total", 1)
+	
 	progress_bar.min_value = 0
 	progress_bar.max_value = xp_total
-	progress_bar.value = xp_earned
+	
+	# MJUK ANIMATION FÖR PROGRESS BAR
+	var tween = get_tree().create_tween()
+	tween.tween_property(progress_bar, "value", float(xp_earned), 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	
 	progress_label.text = "%d / %d XP" % [xp_earned, xp_total]
 
 	commits_label.text = "🔨 Commits: %d" % state.get("commits_total", 0)
@@ -74,6 +88,30 @@ func _on_state_updated(state: Dictionary) -> void:
 			
 		buttons[i].text = "🎲"
 		buttons[i].disabled = false
+
+func spawn_floating_xp(amount: int) -> void:
+	var label = Label.new()
+	label.text = "+%d XP!" % amount
+	label.add_theme_font_size_override("font_size", 48)
+	label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.2)) # Neongrön
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	label.add_theme_constant_override("outline_size", 8)
+	
+	# Startposition (ungefär där Progress Baren är)
+	label.position = Vector2(400, 180)
+	$UI.add_child(label)
+	
+	# Skapa en Tween för att flytta den uppåt och tona ut den
+	var tween = get_tree().create_tween().set_parallel(true)
+	
+	# Åk uppåt 100 pixlar under 1.5 sekunder
+	tween.tween_property(label, "position:y", label.position.y - 100, 1.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Bli genomskinlig
+	tween.tween_property(label, "modulate:a", 0.0, 1.5).set_trans(Tween.TRANS_LINEAR)
+	
+	# När animationen är klar, ta bort text-noden (efter 1.5s)
+	tween.chain().tween_callback(label.queue_free)
 
 func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
