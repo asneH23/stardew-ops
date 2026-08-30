@@ -282,3 +282,13 @@ def quest_history(session: Session = Depends(get_session)):
         select(Quest).where(Quest.status == QuestStatus.COMPLETED).order_by(Quest.completed_at.desc())
     ).all()
     return {"completed_count": len(completed), "quests": completed}
+
+@app.get("/debug-env", tags=["Dev"])
+def debug_env():
+    import os
+    key = os.getenv("GEMINI_API_KEY")
+    return {
+        "key_exists": bool(key),
+        "key_length": len(key) if key else 0,
+        "starts_with_AIza": key.startswith("AIza") if key else False
+    }
