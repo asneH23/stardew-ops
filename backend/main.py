@@ -301,3 +301,19 @@ def debug_db():
         "db_url_exists": bool(db_url),
         "db_type": "postgres" if db_url and "postgres" in db_url else "sqlite (temporary!)"
     }
+
+@app.get("/debug-ai", tags=["Dev"])
+def debug_ai():
+    import os
+    import google.generativeai as genai
+    key = os.getenv("GEMINI_API_KEY")
+    if not key:
+        return {"error": "Ingen nyckel hittades"}
+    
+    try:
+        genai.configure(api_key=key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        resp = model.generate_content("Säg hej kort!")
+        return {"success": True, "response": resp.text.strip(), "key_start": key[:4]}
+    except Exception as e:
+        return {"error": str(e), "key_start": key[:4]}
