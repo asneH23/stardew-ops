@@ -37,6 +37,13 @@ theme_override_font_sizes/font_size = 14
 modulate = Color(0.7, 0.9, 0.7, 1)
 text = "MLOps-utbildningen som ett RPG  •  50 000 XP att tjäna"
 
+[node name="LevelLabel" type="Label" parent="UI"]
+offset_left = 890.0
+offset_top = 20.0
+theme_override_colors/font_color = Color(1, 0.84, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "Lvl 1 MLOps Engineer"
+
 [node name="Divider1" type="Label" parent="UI"]
 offset_left = 35.0
 offset_top = 88.0
@@ -87,9 +94,17 @@ offset_top = 278.0
 theme_override_font_sizes/font_size = 24
 text = "📋 QUEST BOARD"
 
+[node name="RerollButton" type="Button" parent="UI"]
+offset_left = 240.0
+offset_top = 278.0
+offset_right = 380.0
+offset_bottom = 313.0
+theme_override_font_sizes/font_size = 14
+text = "🎲 Reroll Quests"
+
 [node name="Quest1Label" type="Label" parent="UI"]
 offset_left = 35.0
-offset_top = 322.0
+offset_top = 330.0
 offset_right = 1165.0
 offset_bottom = 430.0
 theme_override_font_sizes/font_size = 15
@@ -100,16 +115,16 @@ text = "🌾 Daily Chore: Laddar..."
 offset_left = 35.0
 offset_top = 442.0
 offset_right = 1165.0
-offset_bottom = 550.0
+offset_bottom = 542.0
 theme_override_font_sizes/font_size = 15
 autowrap_mode = 2
 text = "⚙️ Weekly Contract: Laddar..."
 
 [node name="Quest3Label" type="Label" parent="UI"]
 offset_left = 35.0
-offset_top = 562.0
+offset_top = 554.0
 offset_right = 1165.0
-offset_bottom = 670.0
+offset_bottom = 654.0
 theme_override_font_sizes/font_size = 15
 autowrap_mode = 2
 text = "🏆 Epic Project: Laddar..."
