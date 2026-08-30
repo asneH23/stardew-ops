@@ -292,3 +292,12 @@ def debug_env():
         "key_length": len(key) if key else 0,
         "starts_with_AIza": key.startswith("AIza") if key else False
     }
+
+@app.get("/debug-db", tags=["Dev"])
+def debug_db():
+    import os
+    db_url = os.getenv("DATABASE_URL")
+    return {
+        "db_url_exists": bool(db_url),
+        "db_type": "postgres" if db_url and "postgres" in db_url else "sqlite (temporary!)"
+    }
