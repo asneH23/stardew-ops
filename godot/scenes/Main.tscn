@@ -1,82 +1,85 @@
-; Main.tscn — Stardew-Ops MVP-scen
-; OBS: Godot .tscn-filer är textformat. Öppna detta i Godot Editor
-; och koppla scripten manuellt, ELLER använd instruktionerna i README.
-;
-; Nodstruktur:
-;
-;   Main (Node2D)          scripts/GameManager.gd
-;   ├── ApiClient (Node)   scripts/ApiClient.gd
-;   ├── UI (CanvasLayer)
-;   │   ├── XPLabel (Label)
-;   │   ├── CourseLabel (Label)
-;   │   ├── ProgressBar (ProgressBar)
-;   │   ├── CommitsLabel (Label)
-;   │   └── QuestBoard (VBoxContainer)
-;   │       ├── QuestBoardTitle (Label)
-;   │       ├── Quest1Label (Label)
-;   │       ├── Quest2Label (Label)
-;   │       └── Quest3Label (Label)
-;   └── StatusLabel (Label)
-;
-; SETUP-STEG I GODOT EDITOR:
-; 1. Skapa ny scen → Root Node: Node2D → namnge "Main"
-; 2. Lägg till barn-noder enligt strukturen ovan
-; 3. Dra scripts/GameManager.gd till Main-noden
-; 4. Dra scripts/ApiClient.gd till ApiClient-noden
-; 5. Placera UI-noder på lämpliga positioner
-; 6. Kör scenen (F5) — kontrollera Godot Output för "[ApiClient]"-loggar
+[gd_scene load_steps=3 format=3 uid="uid://stardewops-main"]
 
-[gd_scene load_steps=3 format=3 uid="uid://placeholder"]
+[ext_resource type="Script" path="res://scripts/GameManager.gd" id="1_gamemgr"]
+[ext_resource type="Script" path="res://scripts/ApiClient.gd" id="2_apiclient"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_gamemgr")
 
 [node name="ApiClient" type="Node" parent="."]
 script = ExtResource("2_apiclient")
-backend_url = "http://localhost:8000"
+backend_url = "https://web-production-76e9c.up.railway.app"
 poll_interval = 10.0
+
+[node name="StatusLabel" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 570.0
+text = "⏳ Ansluter..."
 
 [node name="UI" type="CanvasLayer" parent="."]
 
+[node name="Background" type="ColorRect" parent="UI"]
+offset_right = 800.0
+offset_bottom = 600.0
+color = Color(0.08, 0.12, 0.08, 1)
+
+[node name="TitleLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 15.0
+theme_override_font_sizes/font_size = 22
+text = "🌾 STARDEW-OPS"
+
 [node name="XPLabel" type="Label" parent="UI"]
 offset_left = 20.0
-offset_top = 20.0
+offset_top = 55.0
+theme_override_font_sizes/font_size = 16
 text = "Total XP: 0"
 
 [node name="CourseLabel" type="Label" parent="UI"]
 offset_left = 20.0
-offset_top = 50.0
+offset_top = 80.0
 text = "Kurs: Laddar..."
 
 [node name="ProgressBar" type="ProgressBar" parent="UI"]
 offset_left = 20.0
-offset_top = 80.0
-offset_right = 300.0
-offset_bottom = 100.0
+offset_top = 105.0
+offset_right = 500.0
+offset_bottom = 125.0
 
 [node name="CommitsLabel" type="Label" parent="UI"]
 offset_left = 20.0
-offset_top = 110.0
+offset_top = 133.0
 text = "Commits: 0"
 
-[node name="QuestBoard" type="VBoxContainer" parent="UI"]
+[node name="Divider" type="Label" parent="UI"]
 offset_left = 20.0
-offset_top = 160.0
-offset_right = 500.0
+offset_top = 170.0
+theme_override_font_sizes/font_size = 14
+text = "═══════════════════════════════"
 
-[node name="QuestBoardTitle" type="Label" parent="UI/QuestBoard"]
-text = "═══ QUEST BOARD ═══"
+[node name="QuestBoardTitle" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 195.0
+theme_override_font_sizes/font_size = 16
+text = "📋 QUEST BOARD"
 
-[node name="Quest1Label" type="Label" parent="UI/QuestBoard"]
+[node name="Quest1Label" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 230.0
+custom_minimum_size = Vector2(760, 0)
+autowrap_mode = 2
 text = "[Daily Chore] Laddar..."
 
-[node name="Quest2Label" type="Label" parent="UI/QuestBoard"]
+[node name="Quest2Label" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 280.0
+custom_minimum_size = Vector2(760, 0)
+autowrap_mode = 2
 text = "[Weekly Contract] Laddar..."
 
-[node name="Quest3Label" type="Label" parent="UI/QuestBoard"]
-text = "[Epic Project] Laddar..."
-
-[node name="StatusLabel" type="Label" parent="."]
+[node name="Quest3Label" type="Label" parent="UI"]
 offset_left = 20.0
-offset_top = 420.0
-text = "⏳ Startar..."
+offset_top = 350.0
+custom_minimum_size = Vector2(760, 0)
+autowrap_mode = 2
+text = "[Epic Project] Laddar..."
