@@ -77,6 +77,7 @@ class StateResponse(SQLModel):
     current_course_name: str
     current_course_xp_total: int
     current_course_xp_earned: int
+    level: int
     commits_total: int
     quests: list[dict]
 

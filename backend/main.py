@@ -204,6 +204,7 @@ def get_state(session: Session = Depends(get_session)):
         current_course_name=course["name"],
         current_course_xp_total=course["xp_total"],
         current_course_xp_earned=course_xp_earned,
+        level=min(100, 1 + (state.total_xp // 200)),
         commits_total=state.commits_total,
         quests=quests_data,
     )
