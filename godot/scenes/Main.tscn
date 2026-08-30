@@ -38,11 +38,36 @@ modulate = Color(0.7, 0.9, 0.7, 1)
 text = "MLOps-utbildningen som ett RPG  •  50 000 XP att tjäna"
 
 [node name="LevelLabel" type="Label" parent="UI"]
-offset_left = 890.0
+offset_left = 40.0
 offset_top = 20.0
 theme_override_colors/font_color = Color(1, 0.84, 0, 1)
 theme_override_font_sizes/font_size = 28
 text = "Lvl 1 MLOps Engineer"
+
+[node name="Map" type="Panel" parent="UI"]
+offset_left = 730.0
+offset_top = 30.0
+offset_right = 1130.0
+offset_bottom = 90.0
+
+[node name="RoadLabel" type="Label" parent="UI/Map"]
+offset_left = 10.0
+offset_top = 20.0
+theme_override_font_sizes/font_size = 12
+modulate = Color(0.5, 0.5, 0.5, 1)
+text = "----------------------------------------------------------------------"
+
+[node name="GoalLabel" type="Label" parent="UI/Map"]
+offset_left = 370.0
+offset_top = 10.0
+theme_override_font_sizes/font_size = 24
+text = "🏰"
+
+[node name="PlayerSprite" type="Label" parent="UI/Map"]
+offset_left = 0.0
+offset_top = 10.0
+theme_override_font_sizes/font_size = 24
+text = "🧑‍🌾"
 
 [node name="Divider1" type="Label" parent="UI"]
 offset_left = 35.0

@@ -17,6 +17,9 @@ extends Node2D
 @onready var btn_reroll_2: Button = $UI/BtnReroll2
 @onready var btn_reroll_3: Button = $UI/BtnReroll3
 
+@onready var player_sprite: Label = $UI/Map/PlayerSprite
+@onready var map_panel: Panel = $UI/Map
+
 var last_known_xp: int = -1
 
 func _ready() -> void:
@@ -38,23 +41,18 @@ func _on_state_updated(state: Dictionary) -> void:
 	status_label.text = "✅ Ansluten  |  Uppdateras var 10:e sekund"
 
 	var total_xp: int = state.get("total_xp", 0)
+	var level: int = state.get("level", 1)
 	
-	# DOPAMIN-ANIMATION: Om XP har ökat, skapa en svävande text!
 	if last_known_xp != -1 and total_xp > last_known_xp:
 		var gained = total_xp - last_known_xp
 		spawn_floating_xp(gained)
 		
-		# NATIVE MAC OS NOTIFICATION
-		var apple_script = 'display notification "Du fick +%d XP!" with title "Stardew-Ops 🤖" subtitle "Gemini har analyserat din kod!"' % gained
-		var output = []
-		var exit_code = OS.execute("/usr/bin/osascript", ["-e", apple_script], output)
-		print("[Notis] Mac OS Exit Code: ", exit_code, " | Output: ", output)
+		# SPELA UPP ETT LJUD DIREKT I MAC OS
+		OS.execute("afplay", ["/System/Library/Sounds/Glass.aiff"], [])
 		
 	last_known_xp = total_xp
 
 	xp_label.text = "⭐ Total XP: %d" % total_xp
-	
-	var level: int = state.get("level", 1)
 	level_label.text = "Lvl %d MLOps Engineer" % level
 
 	var course_name: String = state.get("current_course_name", "Okänd kurs")
@@ -66,12 +64,10 @@ func _on_state_updated(state: Dictionary) -> void:
 	progress_bar.min_value = 0
 	progress_bar.max_value = xp_total
 	
-	# MJUK ANIMATION FÖR PROGRESS BAR
 	var tween = get_tree().create_tween()
 	tween.tween_property(progress_bar, "value", float(xp_earned), 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	
 	progress_label.text = "%d / %d XP" % [xp_earned, xp_total]
-
 	commits_label.text = "🔨 Commits: %d" % state.get("commits_total", 0)
 
 	var quests: Array = state.get("quests", [])
@@ -95,11 +91,23 @@ func _on_state_updated(state: Dictionary) -> void:
 		buttons[i].text = "🎲"
 		buttons[i].disabled = false
 
+	# UPPDATERA KARTAN (Flytta gubben baserat på level)
+	update_map(level)
+
+
+func update_map(level: int) -> void:
+	# Kartan är 400px bred. Max level vi visar är t.ex. 10.
+	# Varje level flyttar gubben 40 pixlar åt höger.
+	var target_x = min((level - 1) * 40, 360) 
+	var tween = get_tree().create_tween()
+	tween.tween_property(player_sprite, "position:x", float(target_x), 1.0).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+
+
 func spawn_floating_xp(amount: int) -> void:
 	var label = Label.new()
 	label.text = "+%d XP!" % amount
 	label.add_theme_font_size_override("font_size", 48)
-	label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.2)) # Neongrön
+	label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.2))
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	label.add_theme_constant_override("outline_size", 8)
 	
@@ -107,13 +115,8 @@ func spawn_floating_xp(amount: int) -> void:
 	$UI.add_child(label)
 	
 	var tween = get_tree().create_tween().set_parallel(true)
-	
-	# Långsammare animation: 4 sekunder och flyger dubbelt så högt upp (200 px)
 	tween.tween_property(label, "position:y", label.position.y - 200, 4.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	
-	# Börja tona ut sakta över 4 sekunder
 	tween.tween_property(label, "modulate:a", 0.0, 4.0).set_trans(Tween.TRANS_LINEAR)
-	
 	tween.chain().tween_callback(label.queue_free)
 
 func _on_connection_error(message: String) -> void:
