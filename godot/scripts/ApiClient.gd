@@ -1,10 +1,10 @@
 extends Node
 
-@export var backend_url: String = "http://127.0.0.1:8000"
+@export var backend_url: String = "https://web-production-76e9c.up.railway.app"
 @export var poll_interval: float = 10.0
 
 var http_request: HTTPRequest
-var reroll_request: HTTPRequest
+var reroll_requests: Array[HTTPRequest] = []
 var timer: Timer
 
 signal state_updated(state_dict)
@@ -15,9 +15,11 @@ func _ready() -> void:
 	add_child(http_request)
 	http_request.request_completed.connect(_on_request_completed)
 	
-	reroll_request = HTTPRequest.new()
-	add_child(reroll_request)
-	reroll_request.request_completed.connect(_on_reroll_completed)
+	for i in range(3):
+		var req = HTTPRequest.new()
+		add_child(req)
+		req.request_completed.connect(_on_reroll_completed)
+		reroll_requests.append(req)
 
 	timer = Timer.new()
 	timer.wait_time = poll_interval
@@ -33,10 +35,9 @@ func _poll_state() -> void:
 	if err != OK:
 		emit_signal("connection_error", "Kunde inte ansluta till API:et")
 
-func reroll_quests() -> void:
-	var url = backend_url + "/quests/reroll"
-	# POST request with empty body
-	reroll_request.request(url, [], HTTPClient.METHOD_POST, "")
+func reroll_quest(slot: int) -> void:
+	var url = backend_url + "/quests/reroll/" + str(slot)
+	reroll_requests[slot - 1].request(url, [], HTTPClient.METHOD_POST, "")
 
 func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
@@ -51,5 +52,4 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 
 func _on_reroll_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
-		# Uppdatera staten direkt när reroll är klar för snabb feedback
 		_poll_state()

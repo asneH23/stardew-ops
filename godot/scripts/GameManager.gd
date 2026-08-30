@@ -1,4 +1,3 @@
-# GameManager.gd — Stardew-Ops huvud-controller
 extends Node2D
 
 @onready var api_client: Node = $ApiClient
@@ -9,23 +8,29 @@ extends Node2D
 @onready var progress_label: Label = $UI/ProgressLabel
 @onready var commits_label: Label = $UI/CommitsLabel
 @onready var status_label: Label = $StatusLabel
+
 @onready var quest1_label: Label = $UI/Quest1Label
 @onready var quest2_label: Label = $UI/Quest2Label
 @onready var quest3_label: Label = $UI/Quest3Label
-@onready var reroll_button: Button = $UI/RerollButton
+
+@onready var btn_reroll_1: Button = $UI/BtnReroll1
+@onready var btn_reroll_2: Button = $UI/BtnReroll2
+@onready var btn_reroll_3: Button = $UI/BtnReroll3
 
 
 func _ready() -> void:
 	api_client.state_updated.connect(_on_state_updated)
 	api_client.connection_error.connect(_on_connection_error)
-	reroll_button.pressed.connect(_on_reroll_pressed)
-	print("[GameManager] Stardew-Ops startar!")
+	
+	btn_reroll_1.pressed.connect(func(): _on_reroll_pressed(1, btn_reroll_1))
+	btn_reroll_2.pressed.connect(func(): _on_reroll_pressed(2, btn_reroll_2))
+	btn_reroll_3.pressed.connect(func(): _on_reroll_pressed(3, btn_reroll_3))
 
 
-func _on_reroll_pressed() -> void:
-	reroll_button.text = "🎲 Kastar om..."
-	reroll_button.disabled = true
-	api_client.reroll_quests()
+func _on_reroll_pressed(slot: int, btn: Button) -> void:
+	btn.text = "⏳"
+	btn.disabled = true
+	api_client.reroll_quest(slot)
 
 
 func _on_state_updated(state: Dictionary) -> void:
@@ -34,7 +39,6 @@ func _on_state_updated(state: Dictionary) -> void:
 	var total_xp: int = state.get("total_xp", 0)
 	xp_label.text = "⭐ Total XP: %d" % total_xp
 	
-	# LEVEL!
 	var level: int = state.get("level", 1)
 	level_label.text = "Lvl %d MLOps Engineer" % level
 
@@ -53,11 +57,12 @@ func _on_state_updated(state: Dictionary) -> void:
 	var quests: Array = state.get("quests", [])
 	var slot_names = ["🌾 Daily Chore", "⚙️ Weekly Contract", "🏆 Epic Project"]
 	var labels = [quest1_label, quest2_label, quest3_label]
+	var buttons = [btn_reroll_1, btn_reroll_2, btn_reroll_3]
 
 	for i in range(3):
 		if i < quests.size():
 			var q: Dictionary = quests[i]
-			labels[i].text = "%s — %s\n    %s\n    (+%d XP, +%d bonus vid commit)" % [
+			labels[i].text = "%s — %s\n    %s\n    (+%d XP, +%d bonus)" % [
 				slot_names[i],
 				q.get("title", "?"),
 				q.get("description", ""),
@@ -67,10 +72,8 @@ func _on_state_updated(state: Dictionary) -> void:
 		else:
 			labels[i].text = "%s: Ingen aktiv quest" % slot_names[i]
 			
-	# Återställ reroll-knappen
-	reroll_button.text = "🎲 Reroll Quests"
-	reroll_button.disabled = false
-
+		buttons[i].text = "🎲"
+		buttons[i].disabled = false
 
 func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message

@@ -94,16 +94,16 @@ offset_top = 278.0
 theme_override_font_sizes/font_size = 24
 text = "📋 QUEST BOARD"
 
-[node name="RerollButton" type="Button" parent="UI"]
-offset_left = 240.0
-offset_top = 278.0
-offset_right = 380.0
-offset_bottom = 313.0
-theme_override_font_sizes/font_size = 14
-text = "🎲 Reroll Quests"
+[node name="BtnReroll1" type="Button" parent="UI"]
+offset_left = 35.0
+offset_top = 330.0
+offset_right = 75.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 20
+text = "🎲"
 
 [node name="Quest1Label" type="Label" parent="UI"]
-offset_left = 35.0
+offset_left = 85.0
 offset_top = 330.0
 offset_right = 1165.0
 offset_bottom = 430.0
@@ -111,8 +111,16 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 2
 text = "🌾 Daily Chore: Laddar..."
 
-[node name="Quest2Label" type="Label" parent="UI"]
+[node name="BtnReroll2" type="Button" parent="UI"]
 offset_left = 35.0
+offset_top = 442.0
+offset_right = 75.0
+offset_bottom = 482.0
+theme_override_font_sizes/font_size = 20
+text = "🎲"
+
+[node name="Quest2Label" type="Label" parent="UI"]
+offset_left = 85.0
 offset_top = 442.0
 offset_right = 1165.0
 offset_bottom = 542.0
@@ -120,8 +128,16 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 2
 text = "⚙️ Weekly Contract: Laddar..."
 
-[node name="Quest3Label" type="Label" parent="UI"]
+[node name="BtnReroll3" type="Button" parent="UI"]
 offset_left = 35.0
+offset_top = 554.0
+offset_right = 75.0
+offset_bottom = 594.0
+theme_override_font_sizes/font_size = 20
+text = "🎲"
+
+[node name="Quest3Label" type="Label" parent="UI"]
+offset_left = 85.0
 offset_top = 554.0
 offset_right = 1165.0
 offset_bottom = 654.0
