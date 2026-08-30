@@ -13,73 +13,103 @@ poll_interval = 10.0
 
 [node name="StatusLabel" type="Label" parent="."]
 offset_left = 20.0
-offset_top = 570.0
+offset_top = 670.0
+theme_override_font_sizes/font_size = 13
 text = "⏳ Ansluter..."
 
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="Background" type="ColorRect" parent="UI"]
-offset_right = 800.0
-offset_bottom = 600.0
-color = Color(0.08, 0.12, 0.08, 1)
+offset_right = 1000.0
+offset_bottom = 700.0
+color = Color(0.06, 0.10, 0.06, 1)
 
 [node name="TitleLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 15.0
-theme_override_font_sizes/font_size = 22
+offset_left = 30.0
+offset_top = 20.0
+theme_override_font_sizes/font_size = 28
 text = "🌾 STARDEW-OPS"
 
+[node name="SubtitleLabel" type="Label" parent="UI"]
+offset_left = 30.0
+offset_top = 56.0
+theme_override_font_sizes/font_size = 13
+modulate = Color(0.7, 0.9, 0.7, 1)
+text = "MLOps-utbildningen som ett RPG"
+
+[node name="Divider1" type="Label" parent="UI"]
+offset_left = 30.0
+offset_top = 80.0
+theme_override_font_sizes/font_size = 12
+modulate = Color(0.4, 0.6, 0.4, 1)
+text = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 [node name="XPLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 55.0
-theme_override_font_sizes/font_size = 16
-text = "Total XP: 0"
+offset_left = 30.0
+offset_top = 105.0
+theme_override_font_sizes/font_size = 20
+text = "⭐ Total XP: 0"
 
 [node name="CourseLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 80.0
-text = "Kurs: Laddar..."
+offset_left = 30.0
+offset_top = 135.0
+theme_override_font_sizes/font_size = 16
+text = "📚 Kurs: Laddar..."
 
 [node name="ProgressBar" type="ProgressBar" parent="UI"]
-offset_left = 20.0
-offset_top = 105.0
-offset_right = 500.0
-offset_bottom = 125.0
+offset_left = 30.0
+offset_top = 165.0
+offset_right = 700.0
+offset_bottom = 190.0
+
+[node name="ProgressLabel" type="Label" parent="UI"]
+offset_left = 710.0
+offset_top = 165.0
+theme_override_font_sizes/font_size = 13
+text = "0 / 0 XP"
 
 [node name="CommitsLabel" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 133.0
-text = "Commits: 0"
+offset_left = 30.0
+offset_top = 200.0
+theme_override_font_sizes/font_size = 15
+text = "🔨 Commits: 0"
 
-[node name="Divider" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 170.0
-theme_override_font_sizes/font_size = 14
-text = "═══════════════════════════════"
+[node name="Divider2" type="Label" parent="UI"]
+offset_left = 30.0
+offset_top = 235.0
+theme_override_font_sizes/font_size = 12
+modulate = Color(0.4, 0.6, 0.4, 1)
+text = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 [node name="QuestBoardTitle" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 195.0
-theme_override_font_sizes/font_size = 16
+offset_left = 30.0
+offset_top = 255.0
+theme_override_font_sizes/font_size = 20
 text = "📋 QUEST BOARD"
 
 [node name="Quest1Label" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 230.0
-custom_minimum_size = Vector2(760, 0)
+offset_left = 30.0
+offset_top = 295.0
+offset_right = 960.0
+offset_bottom = 380.0
+theme_override_font_sizes/font_size = 14
 autowrap_mode = 2
-text = "[Daily Chore] Laddar..."
+text = "🌾 Daily Chore: Laddar..."
 
 [node name="Quest2Label" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 280.0
-custom_minimum_size = Vector2(760, 0)
+offset_left = 30.0
+offset_top = 390.0
+offset_right = 960.0
+offset_bottom = 475.0
+theme_override_font_sizes/font_size = 14
 autowrap_mode = 2
-text = "[Weekly Contract] Laddar..."
+text = "⚙️ Weekly Contract: Laddar..."
 
 [node name="Quest3Label" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 350.0
-custom_minimum_size = Vector2(760, 0)
+offset_left = 30.0
+offset_top = 485.0
+offset_right = 960.0
+offset_bottom = 570.0
+theme_override_font_sizes/font_size = 14
 autowrap_mode = 2
-text = "[Epic Project] Laddar..."
+text = "🏆 Epic Project: Laddar..."
