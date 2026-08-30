@@ -8,6 +8,8 @@ extends Node2D
 @onready var progress_label: Label = $UI/ProgressLabel
 @onready var commits_label: Label = $UI/CommitsLabel
 @onready var status_label: Label = $StatusLabel
+@onready var player: CharacterBody2D = $"../Player"
+@onready var crops_node: Node2D = $"../Crops"
 
 @onready var quest1_label: Label = $UI/Quest1Label
 @onready var quest2_label: Label = $UI/Quest2Label
@@ -49,6 +51,7 @@ func _on_state_updated(state: Dictionary) -> void:
 	if last_known_xp != -1 and total_xp > last_known_xp:
 		var gained = total_xp - last_known_xp
 		spawn_floating_xp(gained)
+		plant_crop(total_xp)
 		
 		# SPELA UPP ETT LJUD DIREKT I MAC OS
 		var audio_output = []
@@ -132,3 +135,22 @@ func spawn_floating_xp(amount: int) -> void:
 
 func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
+
+func plant_crop(total_xp: int) -> void:
+	var emojis = ["🌲", "🎃", "🌻", "🍎", "🌽", "🍄"]
+	# Välj emoji baserat på total XP (lite variation)
+	var emoji = emojis[(total_xp / 50) % emojis.size()]
+	
+	var crop = Label.new()
+	crop.text = emoji
+	crop.add_theme_font_size_override("font_size", 40)
+	# Plantera den exakt där spelaren står (justera lite för mitten)
+	crop.position = player.global_position - Vector2(20, 20)
+	
+	# Lägg till i världen
+	crops_node.add_child(crop)
+	
+	# Cool pop-in animation
+	crop.scale = Vector2.ZERO
+	var tween = get_tree().create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(crop, "scale", Vector2(1, 1), 1.0)

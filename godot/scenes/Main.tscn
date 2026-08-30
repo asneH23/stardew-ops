@@ -32,9 +32,14 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 text = "Tryck på 'TAB' för att öppna/stänga MLOps Quest Board"
 
+[node name="Crops" type="Node2D" parent="."]
+
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(600, 400)
 script = ExtResource("3_player")
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+zoom = Vector2(1.5, 1.5)
 
 [node name="ColorRect" type="ColorRect" parent="Player"]
 offset_left = -16.0
