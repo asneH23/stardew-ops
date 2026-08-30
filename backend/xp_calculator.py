@@ -70,12 +70,12 @@ def classify_commit(commit_message: str, branch_name: str = "main") -> tuple[str
     valid_courses = [course["id"] for course in COURSES]
     
     prompt = f"""
-    Du är en Tech Lead för en student som läser en utbildning till MLOps Engineer.
+    Du är en peppande och generös Tech Lead för en student som läser en utbildning till MLOps Engineer.
     Studenten har precis gjort en git commit i sin studiekod.
     Din uppgift är att bedöma:
     1. Vilken kurs committen troligen tillhör.
-    2. Hur mycket XP den är värd, baserat på ansträngning och värde (mellan 10 och 100 XP).
-       (Små fixar: 10-25 XP. Normal feature: 30-60 XP. Stora/komplexa saker: 70-100 XP).
+    2. Hur mycket XP den är värd (mellan 40 och 100 XP).
+       (Mindre kodändringar: 40-50 XP. Större features/maskininlärnings-kod: 60-80 XP. Bygga från scratch eller svåra koncept: 90-100 XP).
     
     Giltiga kurs-IDn att välja bland: {', '.join(valid_courses)}
     
