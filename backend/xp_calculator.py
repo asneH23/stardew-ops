@@ -16,6 +16,10 @@ XP per commit baseras på conventional commit-typ:
   refactor→ 30 XP
   default → 20 XP
 """
+import os
+import json
+import google.generativeai as genai
+
 
 import re
 from courses import PREFIX_TO_COURSE, COURSE_BY_ID, COURSES
@@ -37,6 +41,15 @@ COMMIT_TYPE_XP: dict[str, int] = {
 }
 DEFAULT_XP = 20
 
+# Setup Gemini
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    # Gemini 1.5 Flash - snabb, billig och perfekt för textklassificering
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    model = None
+
 # Regex: matchar "type(scope): message"
 CONVENTIONAL_COMMIT_RE = re.compile(
     r"^(?P<type>\w+)(?:\((?P<scope>[^)]+)\))?(?:!)?:\s+(?P<desc>.+)$",
@@ -44,7 +57,68 @@ CONVENTIONAL_COMMIT_RE = re.compile(
 )
 
 
-def classify_commit(message: str, branch: str = "main") -> tuple[str, int]:
+def classify_commit(commit_message: str, branch_name: str = "main") -> tuple[str, int]:
+    """
+    Använder Gemini (om API-nyckeln finns) för att agera Tech Lead och bedöma
+    vilken kurs din commit hör till och hur mycket XP den är värd (10-100).
+    Returnerar (course_id, xp).
+    """
+    if not model:
+        print("⚠️ Ingen GEMINI_API_KEY hittades. Använder fallback-logik.")
+        return _fallback_classification(commit_message, branch_name)
+
+    valid_courses = [course["id"] for course in COURSES]
+    
+    prompt = f"""
+    Du är en Tech Lead för en student som läser en utbildning till MLOps Engineer.
+    Studenten har precis gjort en git commit i sin studiekod.
+    Din uppgift är att bedöma:
+    1. Vilken kurs committen troligen tillhör.
+    2. Hur mycket XP den är värd, baserat på ansträngning och värde (mellan 10 och 100 XP).
+       (Små fixar: 10-25 XP. Normal feature: 30-60 XP. Stora/komplexa saker: 70-100 XP).
+    
+    Giltiga kurs-IDn att välja bland: {', '.join(valid_courses)}
+    
+    Commit-meddelande: "{commit_message}"
+    Branch: "{branch_name}"
+    
+    Returnera ENDAST ett giltigt JSON-objekt utan markdown-taggar. Format:
+    {{
+        "course_id": "valt_kurs_id",
+        "xp": 50,
+        "reasoning": "Kort motivering på svenska till varför (max 1-2 meningar)."
+    }}
+    
+    Om du är osäker, fallback på "python" med 20 XP.
+    """
+    
+    try:
+        response = model.generate_content(prompt)
+        text = response.text.strip()
+        
+        # Rensa eventuella markdown code blocks (```json ... ```)
+        if text.startswith("```"):
+            lines = text.split("\n")
+            text = "\n".join(lines[1:-1])
+            
+        data = json.loads(text)
+        course_id = data.get("course_id", "python")
+        xp = data.get("xp", 30)
+        reasoning = data.get("reasoning", "")
+        
+        print(f"🤖 Gemini analys: {reasoning} -> {course_id} (+{xp} XP)")
+        
+        if course_id not in COURSE_BY_ID:
+            course_id = "python"
+            
+        return course_id, xp
+        
+    except Exception as e:
+        print(f"❌ Gemini error: {e}")
+        return _fallback_classification(commit_message, branch_name)
+
+
+def _fallback_classification(message: str, branch: str) -> tuple[str, int]:
     """
     Returnerar (course_id, xp_awarded).
     Försöker matcha i denna ordning:
