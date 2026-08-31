@@ -25,6 +25,7 @@ extends Node2D
 var last_known_xp: int = -1
 
 func _ready() -> void:
+	draw_pixel_grass()
 	api_client.state_updated.connect(_on_state_updated)
 	api_client.connection_error.connect(_on_connection_error)
 	
@@ -137,20 +138,35 @@ func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
 
 func plant_crop(total_xp: int) -> void:
-	var emojis = ["🌲", "🎃", "🌻", "🍎", "🌽", "🍄"]
-	# Välj emoji baserat på total XP (lite variation)
-	var emoji = emojis[(total_xp / 50) % emojis.size()]
+	# Ladda den riktiga grödo-bilden istället för emoji!
+	var crop = Sprite2D.new()
+	crop.texture = preload("res://assets/Objects/Spring Crops.png")
+	crop.region_enabled = true
 	
-	var crop = Label.new()
-	crop.text = emoji
-	crop.add_theme_font_size_override("font_size", 40)
-	# Plantera den exakt där spelaren står (justera lite för mitten)
-	crop.position = player.global_position - Vector2(20, 20)
+	# Skär ut en 16x16 gröda baserat på XP (flyttar rutan längs X-axeln)
+	var crop_index = (total_xp / 50) % 5
+	crop.region_rect = Rect2(crop_index * 16, 0, 16, 16)
+	crop.scale = Vector2(2, 2)
 	
-	# Lägg till i världen
+	# Plantera vid spelarens fötter
+	crop.position = player.global_position + Vector2(0, 10)
 	crops_node.add_child(crop)
 	
-	# Cool pop-in animation
+	# Pop-in animation
 	crop.scale = Vector2.ZERO
 	var tween = get_tree().create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(crop, "scale", Vector2(1, 1), 1.0)
+	tween.tween_property(crop, "scale", Vector2(2, 2), 1.0)
+
+# Rita ut en riktig gräsmatta av pixel-grafik när spelet startar!
+func draw_pixel_grass() -> void:
+	var grass_texture = preload("res://assets/Tileset/Tileset Spring.png")
+	for x in range(-20, 20):
+		for y in range(-20, 20):
+			var tile = Sprite2D.new()
+			tile.texture = grass_texture
+			tile.region_enabled = true
+			tile.region_rect = Rect2(0, 0, 16, 16) # Högst upp till vänster är oftast standardgräs
+			tile.scale = Vector2(2, 2)
+			tile.position = Vector2(x * 32, y * 32)
+			tile.z_index = -10 # Längst bak
+			$WorldBackground.add_child(tile)
