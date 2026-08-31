@@ -138,67 +138,75 @@ func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
 
 func draw_pixel_grass() -> void:
-	# Tileset Grass Spring.png = 384x640, 16x16 tiles
-	# The top-left 16x16 block is pure green grass — confirmed from image
 	var grass_tex = preload("res://assets/Tileset/Tileset Grass Spring.png")
 	var soil_tex  = preload("res://assets/Tileset/Tilled Soil.png")
 	var world_bg  = $WorldBackground
 
-	# Draw 40x30 grass tiles (each 32px scaled = 1280x960 world area)
-	for x in range(-20, 22):
-		for y in range(-16, 18):
-			var tile      = Sprite2D.new()
-			tile.texture  = grass_tex
+	# First: solid green base so no grey shows through tile gaps
+	var base = ColorRect.new()
+	base.color = Color(0.42, 0.69, 0.37, 1)  # Stardew-green
+	base.position = Vector2(-1200, -1200)
+	base.size = Vector2(2400, 2400)
+	base.z_index = -20
+	world_bg.add_child(base)
+
+	# Grass: Tileset Grass Spring.png 384x640, 16x16 tiles
+	# The large SOLID green center tile is at col 1, row 1 (Rect2 16,16,16,16 in the autotile sheet)
+	# Actually in this tileset the filled grass centre is at col 2, row 0 = Rect2(32, 0, 16, 16)
+	for x in range(-22, 24):
+		for y in range(-18, 20):
+			var tile = Sprite2D.new()
+			tile.texture = grass_tex
 			tile.region_enabled = true
-			# Row 0, col 0 in the 16x16 grid = 0,0 → pure grass tile
-			tile.region_rect = Rect2(16, 0, 16, 16)
-			tile.scale    = Vector2(2, 2)
+			tile.region_rect = Rect2(32, 0, 16, 16)  # solid grass centre
+			tile.scale = Vector2(2, 2)
 			tile.position = Vector2(x * 32, y * 32)
-			tile.z_index  = -10
+			tile.z_index = -10
 			world_bg.add_child(tile)
 
-	# Draw a tilled-soil field in the centre (where crops will grow)
+	# Tilled soil field in centre (Tilled Soil.png = 384x128, 16x16 tiles)
+	# Dry tilled soil = col 4, row 0 = Rect2(64, 0, 16, 16) — the plain brown square
 	for fx in range(-6, 7):
 		for fy in range(2, 9):
-			var soil      = Sprite2D.new()
-			soil.texture  = soil_tex
+			var soil = Sprite2D.new()
+			soil.texture = soil_tex
 			soil.region_enabled = true
-			# Tilled Soil.png = 384x128; dry tilled soil tile = col 0, row 0 = Rect2(0,0,16,16)
-			soil.region_rect = Rect2(0, 0, 16, 16)
-			soil.scale    = Vector2(2, 2)
+			soil.region_rect = Rect2(64, 0, 16, 16)
+			soil.scale = Vector2(2, 2)
 			soil.position = Vector2(fx * 32, fy * 32)
-			soil.z_index  = -9
+			soil.z_index = -9
 			world_bg.add_child(soil)
 
-	# Place the house sprite (top-left of farm)
-	var house_tex  = preload("res://assets/Objects/House.png")
-	var house      = Sprite2D.new()
-	house.texture  = house_tex
-	# House.png: take only the main house (left part, roughly 80x64 px)
+	# House (top-left corner)
+	var house_tex = preload("res://assets/Objects/House.png")
+	var house = Sprite2D.new()
+	house.texture = house_tex
 	house.region_enabled = true
 	house.region_rect = Rect2(0, 0, 80, 64)
-	house.scale    = Vector2(3, 3)
-	house.position = Vector2(-300, -200)
-	house.z_index  = 0
+	house.scale = Vector2(3, 3)
+	house.position = Vector2(-380, -320)
+	house.z_index = 5
 	world_bg.add_child(house)
 
-	# Place maple trees around the edges
+	# Maple trees — use the large full-grown frame (last frame in sheet)
+	# Maple Tree.png is ~192x48 with 48x48 frames
 	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
-	# Maple Tree.png: large tree is roughly 32x48 in the sheet
 	var tree_positions = [
-		Vector2(-360, -300), Vector2(-360, -100), Vector2(-360, 100),
-		Vector2( 340, -300), Vector2( 340, -100), Vector2( 340, 100),
-		Vector2(-200, -300), Vector2(   0, -300), Vector2( 200, -300),
+		Vector2(-480, -380), Vector2(-480, -200), Vector2(-480,  0),
+		Vector2(-480,  200), Vector2( 440, -380), Vector2( 440, -200),
+		Vector2( 440,    0), Vector2( 440,  200), Vector2(-200, -380),
+		Vector2(   0, -380), Vector2( 200, -380),
 	]
 	for pos in tree_positions:
-		var tree      = Sprite2D.new()
-		tree.texture  = tree_tex
+		var tree = Sprite2D.new()
+		tree.texture = tree_tex
 		tree.region_enabled = true
-		tree.region_rect = Rect2(32, 0, 32, 48)  # the full-grown tree frame
-		tree.scale    = Vector2(3, 3)
+		tree.region_rect = Rect2(48, 0, 48, 48)  # full-grown tree
+		tree.scale = Vector2(4, 4)
 		tree.position = pos
-		tree.z_index  = 1
+		tree.z_index = 3
 		world_bg.add_child(tree)
+
 
 func plant_crop(total_xp: int) -> void:
 	# All Crops.png = 416x288, individual crop sprites are 16x16
@@ -225,4 +233,3 @@ func plant_crop(total_xp: int) -> void:
 	var tween = get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(crop, "scale", Vector2(3, 3), 0.8)
-
