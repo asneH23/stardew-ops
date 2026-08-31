@@ -41,10 +41,10 @@ func _setup_camera() -> void:
 		cam.zoom = Vector2(1.2, 1.2)
 
 func _on_state_updated(state: Dictionary) -> void:
-	var total_xp = state.get("total_xp", 0)
-	var level = state.get("level", 1)
-	var xp_for_next = state.get("xp_for_next_level", 100)
-	var course_id = state.get("last_course_id", "stardew")
+	var total_xp = int(state.get("total_xp", 0))
+	var level = int(state.get("level", 1))
+	var xp_for_next = int(state.get("xp_for_next_level", 100))
+	var course_id = str(state.get("last_course_id", "stardew"))
 	
 	xp_label.text = "XP: %d" % total_xp
 	level_label.text = "Level %d" % level
