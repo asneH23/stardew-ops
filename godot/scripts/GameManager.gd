@@ -1,17 +1,17 @@
 extends Node
 
-@onready var api_client = $"../ApiClient"
-@onready var status_label = $"../StatusLabel"
-@onready var world_bg = $"../WorldBackground"
-@onready var crops_node = $"../Crops"
-@onready var player = $"../Player"
-@onready var ui = $"../UI"
+@onready var api_client = $ApiClient
+@onready var status_label = $StatusLabel
+@onready var world_bg = $WorldBackground
+@onready var crops_node = $Crops
+@onready var player = $Player
+@onready var ui = $UI
 
-@onready var xp_label = $"../UI/XPLabel"
-@onready var level_label = $"../UI/LevelLabel"
-@onready var progress_bar = $"../UI/ProgressBar"
-@onready var commits_label = $"../UI/CommitsLabel"
-@onready var course_label = $"../UI/CourseLabel"
+@onready var xp_label = $UI/XPLabel
+@onready var level_label = $UI/LevelLabel
+@onready var progress_bar = $UI/ProgressBar
+@onready var commits_label = $UI/CommitsLabel
+@onready var course_label = $UI/CourseLabel
 
 var last_known_xp: int = -1
 var planting_queue: Array[int] = []
@@ -36,7 +36,7 @@ func _setup_camera() -> void:
 	var cam = player.get_node_or_null("Camera2D")
 	if cam:
 		player.remove_child(cam)
-		get_parent().add_child(cam)
+		add_child(cam)
 		cam.position = Vector2(0, 0)
 		cam.zoom = Vector2(1.2, 1.2)
 
