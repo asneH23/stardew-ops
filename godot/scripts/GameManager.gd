@@ -242,18 +242,6 @@ func _spawn_crop(crop_index: int, hub_pos: Vector2, animate: bool = false) -> vo
 		label_tween.tween_property(label, "modulate:a", 0.0, 1.5)
 		label_tween.chain().tween_callback(label.queue_free)
 
-func _add_fence_row(start: Vector2, count: int, step: Vector2) -> void:
-	var fence_tex = preload("res://assets/Objects/Fence Wood.png")
-	for i in range(count):
-		var f = Sprite2D.new()
-		f.texture = fence_tex
-		f.region_enabled = true
-		f.region_rect = Rect2(0, 0, 16, 32) # Vertikal träplanka
-		f.scale = Vector2(2, 2)
-		f.position = start + step * i
-		f.z_index = 2
-		world_bg.add_child(f)
-
 func _add_sprite(tex_path: String, region: Rect2, pos: Vector2, sc: Vector2, z: int) -> void:
 	var s = Sprite2D.new()
 	s.texture = load(tex_path)
@@ -265,83 +253,43 @@ func _add_sprite(tex_path: String, region: Rect2, pos: Vector2, sc: Vector2, z: 
 	world_bg.add_child(s)
 
 func place_world_objects() -> void:
-	# === BAKGRUND ===
-	# Rikt, levande grönt gräs
+	# === 1. BAKGRUND — Ren, rik grön gräsmatta ===
 	var base = ColorRect.new()
-	base.color = Color(0.38, 0.65, 0.29, 1)
+	base.color = Color(0.36, 0.62, 0.27, 1)
 	base.position = Vector2(-1200, -1200)
 	base.size = Vector2(2400, 2400)
 	base.z_index = -20
 	world_bg.add_child(base)
-	
-	# Lite mörkare gräsfläckar för djup och textur
-	for i in range(80):
-		var patch = ColorRect.new()
-		patch.color = Color(0.32, 0.57, 0.24, randf_range(0.4, 0.7))
-		var pw = randf_range(30, 90)
-		var ph = randf_range(20, 60)
-		patch.position = Vector2(randf_range(-700, 700), randf_range(-500, 500))
-		patch.size = Vector2(pw, ph)
-		patch.z_index = -19
-		world_bg.add_child(patch)
 
-	# === GRUSGÅNGARNA (Dirt paths - varma och organiska) ===
-	# Vertikal gång (från huset ner)
-	var path_col = Color(0.71, 0.54, 0.35, 1)
-	var path_shadow = Color(0.55, 0.40, 0.25, 1)
-	var pv = ColorRect.new()
-	pv.color = path_shadow
-	pv.position = Vector2(-22, -115)
-	pv.size = Vector2(44, 392)
-	pv.z_index = -15
-	world_bg.add_child(pv)
-	var pv2 = ColorRect.new()
-	pv2.color = path_col
-	pv2.position = Vector2(-17, -112)
-	pv2.size = Vector2(34, 386)
-	pv2.z_index = -14
-	world_bg.add_child(pv2)
-	
-	# Horisontell gång (tvärsgatan)
-	var ph_r = ColorRect.new()
-	ph_r.color = path_shadow
-	ph_r.position = Vector2(-256, 80)
-	ph_r.size = Vector2(512, 44)
-	ph_r.z_index = -15
-	world_bg.add_child(ph_r)
-	var ph_r2 = ColorRect.new()
-	ph_r2.color = path_col
-	ph_r2.position = Vector2(-252, 84)
-	ph_r2.size = Vector2(504, 36)
-	ph_r2.z_index = -14
-	world_bg.add_child(ph_r2)
+	# === 2. GRUSGÅNGAR — varma, rena, symmetriska ===
+	var shadow_col = Color(0.52, 0.38, 0.22, 1)
+	var path_col   = Color(0.73, 0.55, 0.34, 1)
 
-	# === STÄNGSEL runt gårdarna ===
-	# Runt vänster hub
-	_add_fence_row(Vector2(-340, 40), 6, Vector2(32, 0))
-	_add_fence_row(Vector2(-340, 164), 6, Vector2(32, 0))
-	_add_fence_row(Vector2(-340, 40), 4, Vector2(0, 32))
-	_add_fence_row(Vector2(-175, 40), 4, Vector2(0, 32))
-	# Runt höger hub
-	_add_fence_row(Vector2(175, 40), 6, Vector2(32, 0))
-	_add_fence_row(Vector2(175, 164), 6, Vector2(32, 0))
-	_add_fence_row(Vector2(175, 40), 4, Vector2(0, 32))
-	_add_fence_row(Vector2(338, 40), 4, Vector2(0, 32))
-	# Runt nedre hub
-	_add_fence_row(Vector2(-90, 196), 6, Vector2(32, 0))
-	_add_fence_row(Vector2(-90, 320), 6, Vector2(32, 0))
-	_add_fence_row(Vector2(-90, 196), 4, Vector2(0, 32))
-	_add_fence_row(Vector2(75, 196), 4, Vector2(0, 32))
+	# Vertikal gång
+	for col in [[Vector2(-21, -115), Vector2(42, 392), shadow_col, -15],
+				[Vector2(-16, -111), Vector2(32, 384), path_col,   -14]]:
+		var r = ColorRect.new()
+		r.position = col[0]; r.size = col[1]; r.color = col[2]; r.z_index = col[3]
+		world_bg.add_child(r)
 
-	# === ODLINGSLÅDOR ===
+	# Horisontell gång
+	for col in [[Vector2(-256, 80), Vector2(512, 44), shadow_col, -15],
+				[Vector2(-252, 84), Vector2(504, 36), path_col,   -14]]:
+		var r = ColorRect.new()
+		r.position = col[0]; r.size = col[1]; r.color = col[2]; r.z_index = col[3]
+		world_bg.add_child(r)
+
+	# === 3. ODLINGSLÅDOR (3x3 tilled soil + mörk ram) ===
 	var soil_tex = preload("res://assets/Tileset/Tilled Soil.png")
 	for hub in hubs:
-		var plot_border = ColorRect.new()
-		plot_border.color = Color(0.42, 0.27, 0.15, 1)
-		plot_border.position = hub + Vector2(-52, -52)
-		plot_border.size = Vector2(104, 104)
-		plot_border.z_index = -11
-		world_bg.add_child(plot_border)
+		# Mörk markinfattning
+		var border = ColorRect.new()
+		border.color = Color(0.40, 0.25, 0.13, 1)
+		border.position = hub + Vector2(-52, -52)
+		border.size = Vector2(104, 104)
+		border.z_index = -11
+		world_bg.add_child(border)
+		# Tilled soil rutor
 		for x in [-1, 0, 1]:
 			for y in [-1, 0, 1]:
 				var soil = Sprite2D.new()
@@ -353,54 +301,50 @@ func place_world_objects() -> void:
 				soil.z_index = -10
 				world_bg.add_child(soil)
 
-	# === DEKORATION ===
-	# Huset (CPU / Farmhouse)
-	_add_sprite("res://assets/Objects/House.png", Rect2(144, 0, 80, 112), Vector2(0, -230), Vector2(3, 3), -5)
-	
-	# Shipping Box
-	_add_sprite("res://assets/Objects/shipping box.png", Rect2(0, 0, 48, 64), shipping_box_pos, Vector2(2, 2), -5)
-	
-	# Brevlåda (nära huset)
-	_add_sprite("res://assets/Objects/Mailbox.png", Rect2(0, 0, 16, 16), Vector2(90, -180), Vector2(3, 3), 2)
-	
-	# Hö-balar (vid sidan av gårdarna)
-	_add_sprite("res://assets/Objects/Hay Bales.png", Rect2(0, 0, 16, 16), Vector2(-430, 200), Vector2(3, 3), 2)
-	_add_sprite("res://assets/Objects/Hay Bales.png", Rect2(0, 0, 16, 16), Vector2(380, 200), Vector2(3, 3), 2)
-	_add_sprite("res://assets/Objects/Hay Bales.png", Rect2(16, 0, 16, 16), Vector2(-430, 232), Vector2(3, 3), 2)
-	
-	# Fågelskrämma (vid varje odlingsplats)
-	_add_sprite("res://assets/Objects/Scarescrow.png", Rect2(0, 0, 16, 32), Vector2(-340, 50), Vector2(2.5, 2.5), 3)
-	_add_sprite("res://assets/Objects/Scarescrow.png", Rect2(0, 0, 16, 32), Vector2(310, 50), Vector2(2.5, 2.5), 3)
-	
-	# Brunn (dekorationspunkt söder om huset)
-	_add_sprite("res://assets/Objects/Well.png", Rect2(0, 0, 32, 48), Vector2(-130, -200), Vector2(2.5, 2.5), -5)
-	
-	# Kyckling (wandrar runt i gårdsplanen)
-	_add_sprite("res://assets/Objects/Chicken White.png", Rect2(0, 0, 16, 16), Vector2(-200, 50), Vector2(2.5, 2.5), 3)
-	_add_sprite("res://assets/Objects/Chicken White.png", Rect2(0, 0, 16, 16), Vector2(200, 40), Vector2(2.5, 2.5), 3)
-	
-	# Får (lite längre ut)
-	_add_sprite("res://assets/Objects/Sheep Female.png", Rect2(0, 0, 32, 48), Vector2(-550, 300), Vector2(2.5, 2.5), 3)
-	_add_sprite("res://assets/Objects/Sheep Female.png", Rect2(0, 0, 32, 48), Vector2(510, 280), Vector2(2.5, 2.5), 3)
+	# === 4. DEKORATIONER — symmetriska och intentionella ===
+	# Huset (centrum/topp)
+	_add_sprite("res://assets/Objects/House.png",        Rect2(144, 0, 80, 112), Vector2(0, -230),   Vector2(3, 3),   -5)
+	# Brunn (vänster om huset)
+	_add_sprite("res://assets/Objects/Well.png",         Rect2(0, 0, 32, 48),   Vector2(-140, -195), Vector2(2, 2),    2)
+	# Brevlåda (höger om huset)
+	_add_sprite("res://assets/Objects/Mailbox.png",      Rect2(0, 0, 16, 16),   Vector2(110, -175),  Vector2(3, 3),    2)
+	# Shipping box (vid huset, höger)
+	_add_sprite("res://assets/Objects/shipping box.png", Rect2(0, 0, 48, 64),   Vector2(110, -220),  Vector2(1.8, 1.8), 2)
 
-	# === TRÄD (organisk ram med blandade träd) ===
-	var tree_defs = [
-		["res://assets/Objects/Maple Tree.png", Rect2(96, 0, 32, 48), Vector2(3.5, 3.5)],
-		["res://assets/Objects/Maple Tree.png", Rect2(64, 0, 32, 48), Vector2(3.5, 3.5)],
-	]
-	var tree_positions = [
-		Vector2(-650, -420), Vector2(-480, -440), Vector2(-300, -460), Vector2(-120, -450),
-		Vector2(120, -450), Vector2(300, -460), Vector2(480, -440), Vector2(650, -420),
-		Vector2(-700, -280), Vector2(700, -280), Vector2(-720, -120), Vector2(720, -120),
-		Vector2(-710, 60), Vector2(710, 60), Vector2(-700, 240), Vector2(700, 240),
-		Vector2(-690, 420), Vector2(690, 420),
-		Vector2(-550, 500), Vector2(-380, 520), Vector2(-200, 510), Vector2(0, 520),
-		Vector2(200, 510), Vector2(380, 520), Vector2(550, 500),
-		# Extra inre träd för att fylla tomrum
-		Vector2(-600, -100), Vector2(600, -100), Vector2(-620, 150), Vector2(620, 150),
-	]
-	for i in range(tree_positions.size()):
-		var def = tree_defs[i % tree_defs.size()]
-		_add_sprite(def[0], def[1], tree_positions[i], def[2], 5)
+	# Hö-balar — ett par på varje sida av kartan (symmetriskt)
+	for x_off in [-530.0, 530.0]:
+		var sign_x = -1.0 if x_off < 0 else 1.0
+		_add_sprite("res://assets/Objects/Hay Bales.png", Rect2(0, 0, 16, 16),  Vector2(x_off, 50),  Vector2(3, 3), 3)
+		_add_sprite("res://assets/Objects/Hay Bales.png", Rect2(16, 0, 16, 16), Vector2(x_off, 98),  Vector2(3, 3), 3)
+
+	# Fågelskrämma — en mitt utanför varje odlingslåda (vänster & höger)
+	_add_sprite("res://assets/Objects/Scarescrow.png", Rect2(0, 0, 16, 32), Vector2(-250, -60), Vector2(2.5, 2.5), 4)
+	_add_sprite("res://assets/Objects/Scarescrow.png", Rect2(0, 0, 16, 32), Vector2(230, -60),  Vector2(2.5, 2.5), 4)
+	_add_sprite("res://assets/Objects/Scarescrow.png", Rect2(0, 0, 16, 32), Vector2(-20, 335),  Vector2(2.5, 2.5), 4)
+
+	# Kycklingar — en per odlingshörn (symmetriskt inuti stängslet)
+	_add_sprite("res://assets/Objects/Chicken White.png", Rect2(0, 0, 16, 16), Vector2(-300, 120), Vector2(2.5, 2.5), 4)
+	_add_sprite("res://assets/Objects/Chicken White.png", Rect2(0, 0, 16, 16), Vector2(280, 120),  Vector2(2.5, 2.5), 4)
+
+	# Får — ett par symmetriskt, längre ut mot sidorna
+	_add_sprite("res://assets/Objects/Sheep Female.png", Rect2(0, 0, 32, 48), Vector2(-580, 300), Vector2(2, 2), 3)
+	_add_sprite("res://assets/Objects/Sheep Female.png", Rect2(0, 0, 32, 48), Vector2(540, 300),  Vector2(2, 2), 3)
+
+	# === 5. TRÄD — ren halvcirkel/ram (inget random) ===
+	# Topp-rad: jämnt fördelat
+	var top_trees    = [-560, -420, -280, -140, 0, 140, 280, 420, 560]
+	var bottom_trees = [-560, -420, -280, -140, 0, 140, 280, 420, 560]
+	var left_trees   = [-380, -220, -60, 100, 260, 420]
+	var right_trees  = [-380, -220, -60, 100, 260, 420]
+
+	for tx in top_trees:
+		_add_sprite("res://assets/Objects/Maple Tree.png", Rect2(96, 0, 32, 48), Vector2(tx, -440), Vector2(3.5, 3.5), 5)
+	for tx in bottom_trees:
+		_add_sprite("res://assets/Objects/Maple Tree.png", Rect2(64, 0, 32, 48), Vector2(tx, 500),  Vector2(3.5, 3.5), 5)
+	for ty in left_trees:
+		_add_sprite("res://assets/Objects/Maple Tree.png", Rect2(96, 0, 32, 48), Vector2(-680, ty), Vector2(3.5, 3.5), 5)
+	for ty in right_trees:
+		_add_sprite("res://assets/Objects/Maple Tree.png", Rect2(64, 0, 32, 48), Vector2(660, ty),  Vector2(3.5, 3.5), 5)
+
 
 
