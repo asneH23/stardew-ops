@@ -25,7 +25,7 @@ extends Node2D
 var last_known_xp: int = -1
 
 func _ready() -> void:
-	draw_pixel_grass()
+	place_world_objects()
 	api_client.state_updated.connect(_on_state_updated)
 	api_client.connection_error.connect(_on_connection_error)
 	
@@ -137,98 +137,64 @@ func spawn_floating_xp(amount: int) -> void:
 func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
 
-func draw_pixel_grass() -> void:
-	var grass_tex = preload("res://assets/Tileset/Tileset Grass Spring.png")
-	var soil_tex  = preload("res://assets/Tileset/Tilled Soil.png")
-	var world_bg  = $WorldBackground
+func place_world_objects() -> void:
+	var world_bg = $WorldBackground
 
-	# First: solid green base so no grey shows through tile gaps
-	var base = ColorRect.new()
-	base.color = Color(0.42, 0.69, 0.37, 1)  # Stardew-green
-	base.position = Vector2(-1200, -1200)
-	base.size = Vector2(2400, 2400)
-	base.z_index = -20
-	world_bg.add_child(base)
-
-	# Grass: Tileset Grass Spring.png 384x640, 16x16 tiles
-	# The large SOLID green center tile is at col 1, row 1 (Rect2 16,16,16,16 in the autotile sheet)
-	# Actually in this tileset the filled grass centre is at col 2, row 0 = Rect2(32, 0, 16, 16)
-	for x in range(-22, 24):
-		for y in range(-18, 20):
-			var tile = Sprite2D.new()
-			tile.texture = grass_tex
-			tile.region_enabled = true
-			tile.region_rect = Rect2(32, 0, 16, 16)  # solid grass centre
-			tile.scale = Vector2(2, 2)
-			tile.position = Vector2(x * 32, y * 32)
-			tile.z_index = -10
-			world_bg.add_child(tile)
-
-	# Tilled soil field in centre (Tilled Soil.png = 384x128, 16x16 tiles)
-	# Dry tilled soil = col 4, row 0 = Rect2(64, 0, 16, 16) — the plain brown square
-	for fx in range(-6, 7):
-		for fy in range(2, 9):
-			var soil = Sprite2D.new()
-			soil.texture = soil_tex
-			soil.region_enabled = true
-			soil.region_rect = Rect2(64, 0, 16, 16)
-			soil.scale = Vector2(2, 2)
-			soil.position = Vector2(fx * 32, fy * 32)
-			soil.z_index = -9
-			world_bg.add_child(soil)
-
-	# House (top-left corner) — House.png is 224x112, left 96x112 = full house with roof+walls
+	# House — show full sprite, no region clipping
 	var house_tex = preload("res://assets/Objects/House.png")
 	var house = Sprite2D.new()
 	house.texture = house_tex
+	# House.png is 224x112. The actual house is left ~100px, rest is modular pieces.
+	# We clip just the left building + roof
 	house.region_enabled = true
-	house.region_rect = Rect2(0, 0, 96, 112)  # full house: roof + walls
+	house.region_rect = Rect2(0, 0, 100, 112)
 	house.scale = Vector2(3, 3)
-	house.position = Vector2(-380, -340)
+	house.position = Vector2(-300, -260)
 	house.z_index = 5
 	world_bg.add_child(house)
 
-	# Maple trees — Maple Tree.png is 160x48, 5 frames of 32x48
-	# Frame 0=seed, 1=sprout, 2=small, 3=medium, 4=large full tree
+	# Trees — Maple Tree.png is 160x48, 5 frames × 32px wide
+	# Frame index 3 (x=96) = nicely-sized full tree with visible canopy
 	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
 	var tree_positions = [
-		Vector2(-500, -380), Vector2(-500, -180), Vector2(-500, 20),
-		Vector2(-500,  220), Vector2( 460, -380), Vector2( 460, -180),
-		Vector2( 460,   20), Vector2( 460,  220), Vector2(-200, -400),
-		Vector2(   0, -400), Vector2( 200, -400),
+		Vector2(-480, -350), Vector2(-480, -150), Vector2(-480, 50),
+		Vector2(-480,  250), Vector2( 420, -350), Vector2( 420, -150),
+		Vector2( 420,   50), Vector2( 420,  250),
+		Vector2(-100, -350), Vector2( 100, -350),
 	]
 	for pos in tree_positions:
 		var tree = Sprite2D.new()
 		tree.texture = tree_tex
 		tree.region_enabled = true
-		tree.region_rect = Rect2(128, 0, 32, 48)  # frame 4 = largest full-grown tree
+		tree.region_rect = Rect2(96, 0, 32, 48)
 		tree.scale = Vector2(4, 4)
 		tree.position = pos
 		tree.z_index = 3
 		world_bg.add_child(tree)
 
-
 func plant_crop(total_xp: int) -> void:
-	# All Crops.png = 416x288, individual crop sprites are 16x16
-	# Row 0 = strawberry stages, row 1 = tomato, row 2 = carrot, etc.
-	# Last column (col ~9-11) in each row = the fully ripe harvest sprite
+	# All Crops.png = 416x288
+	# Each crop has ~5 growth stages horizontally, multiple crops vertically
+	# Columns 0-4 = growth stages (0=seed ... 4=ripe)
+	# Each cell is 16x16px, with a small gap/icon at end
+	# We pick col 4 = ripe stage
 	var crop_tex = preload("res://assets/Objects/All Crops.png")
-	var crop      = Sprite2D.new()
-	crop.texture  = crop_tex
+	var crop = Sprite2D.new()
+	crop.texture = crop_tex
 	crop.region_enabled = true
 
-	# Pick which crop type based on XP (cycles every 50 XP)
-	var crop_row  = (total_xp / 50) % 9      # which crop type
-	var ripe_col  = 9                          # column ~9 = ripe fruit icon
-	crop.region_rect = Rect2(ripe_col * 16, crop_row * 16, 16, 16)
-	crop.scale    = Vector2(3, 3)  # 16*3 = 48px — clearly visible
+	# Row = which crop type (cycles with XP)
+	var crop_row = (total_xp / 50) % 8
+	# Col 4 = the ripe/harvested version of each crop
+	crop.region_rect = Rect2(4 * 32, crop_row * 32, 32, 32)
+	crop.scale = Vector2(3, 3)
 
-	# Snap to tilled-soil grid so crops look planted neatly
-	var grid_pos  = (player.global_position / 32.0).floor() * 32.0
-	crop.position = grid_pos + Vector2(0, 8)
+	# Snap to grid
+	var grid_pos = (player.global_position / 32.0).floor() * 32.0
+	crop.position = grid_pos
 	crops_node.add_child(crop)
 
-	# Pop-in animation: grow from seed
+	# Pop-in spring animation
 	crop.scale = Vector2.ZERO
 	var tween = get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
