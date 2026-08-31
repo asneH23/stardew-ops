@@ -177,31 +177,31 @@ func draw_pixel_grass() -> void:
 			soil.z_index = -9
 			world_bg.add_child(soil)
 
-	# House (top-left corner)
+	# House (top-left corner) — House.png is 224x112, left 96x112 = full house with roof+walls
 	var house_tex = preload("res://assets/Objects/House.png")
 	var house = Sprite2D.new()
 	house.texture = house_tex
 	house.region_enabled = true
-	house.region_rect = Rect2(0, 0, 80, 64)
+	house.region_rect = Rect2(0, 0, 96, 112)  # full house: roof + walls
 	house.scale = Vector2(3, 3)
-	house.position = Vector2(-380, -320)
+	house.position = Vector2(-380, -340)
 	house.z_index = 5
 	world_bg.add_child(house)
 
-	# Maple trees — use the large full-grown frame (last frame in sheet)
-	# Maple Tree.png is ~192x48 with 48x48 frames
+	# Maple trees — Maple Tree.png is 160x48, 5 frames of 32x48
+	# Frame 0=seed, 1=sprout, 2=small, 3=medium, 4=large full tree
 	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
 	var tree_positions = [
-		Vector2(-480, -380), Vector2(-480, -200), Vector2(-480,  0),
-		Vector2(-480,  200), Vector2( 440, -380), Vector2( 440, -200),
-		Vector2( 440,    0), Vector2( 440,  200), Vector2(-200, -380),
-		Vector2(   0, -380), Vector2( 200, -380),
+		Vector2(-500, -380), Vector2(-500, -180), Vector2(-500, 20),
+		Vector2(-500,  220), Vector2( 460, -380), Vector2( 460, -180),
+		Vector2( 460,   20), Vector2( 460,  220), Vector2(-200, -400),
+		Vector2(   0, -400), Vector2( 200, -400),
 	]
 	for pos in tree_positions:
 		var tree = Sprite2D.new()
 		tree.texture = tree_tex
 		tree.region_enabled = true
-		tree.region_rect = Rect2(48, 0, 48, 48)  # full-grown tree
+		tree.region_rect = Rect2(128, 0, 32, 48)  # frame 4 = largest full-grown tree
 		tree.scale = Vector2(4, 4)
 		tree.position = pos
 		tree.z_index = 3
