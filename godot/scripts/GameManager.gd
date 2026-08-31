@@ -42,11 +42,11 @@ func _process(delta: float) -> void:
 		camera.zoom = camera.zoom.lerp(target_zoom, 8.0 * delta)
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
+	if event is InputEventMouseButton and event.is_pressed():
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			target_zoom += Vector2(0.1, 0.1)
+			target_zoom += Vector2(0.15, 0.15)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			target_zoom -= Vector2(0.1, 0.1)
+			target_zoom -= Vector2(0.15, 0.15)
 		target_zoom = target_zoom.clamp(MIN_ZOOM, MAX_ZOOM)
 		
 func _setup_camera() -> void:
@@ -56,6 +56,7 @@ func _setup_camera() -> void:
 		add_child(camera)
 		camera.position = Vector2(0, 0)
 		camera.zoom = target_zoom
+		camera.make_current()
 
 func _on_state_updated(state: Dictionary) -> void:
 	var total_xp = int(state.get("total_xp", 0))
@@ -211,28 +212,49 @@ func _spawn_crop(crop_index: int, hub_pos: Vector2, animate: bool = false) -> vo
 		label_tween.chain().tween_callback(label.queue_free)
 
 func place_world_objects() -> void:
+	# 1. Gräs-bakgrund med mönster (vi lägger en mörkgrön färg och strösslar grästuvor)
 	var base = ColorRect.new()
-	base.color = Color(0.42, 0.69, 0.37, 1)
+	base.color = Color(0.35, 0.58, 0.31, 1) # Mjukare, djupare grön
 	base.position = Vector2(-1200, -1200)
 	base.size = Vector2(2400, 2400)
 	base.z_index = -20
 	world_bg.add_child(base)
 	
-	var bus_v = ColorRect.new()
-	bus_v.color = Color(0.63, 0.45, 0.28, 1)
-	bus_v.position = Vector2(-20, -110)
-	bus_v.size = Vector2(40, 380)
-	bus_v.z_index = -15
-	world_bg.add_child(bus_v)
+	# Strössla lite blommor och gräs över hela kartan för estetik
+	var grass_tex = preload("res://assets/Objects/Spring Crops.png")
+	for i in range(150):
+		var tuft = Sprite2D.new()
+		tuft.texture = grass_tex
+		tuft.region_enabled = true
+		# Plocka slumpmässigt små gräs/blommor (från tidiga växt-stadier X=0, 16)
+		var x_off = [0, 16].pick_random()
+		var y_off = [0, 16, 32, 48, 64].pick_random()
+		tuft.region_rect = Rect2(x_off, y_off, 16, 16)
+		tuft.scale = Vector2(2, 2)
+		tuft.position = Vector2(randf_range(-600, 600), randf_range(-400, 400))
+		tuft.z_index = -18
+		tuft.modulate.a = 0.6 # Gör dem lite subtila i bakgrunden
+		world_bg.add_child(tuft)
 	
-	var bus_h = ColorRect.new()
-	bus_h.color = Color(0.63, 0.45, 0.28, 1)
-	bus_h.position = Vector2(-270, 80)
-	bus_h.size = Vector2(540, 40)
-	bus_h.z_index = -15
-	world_bg.add_child(bus_h)
+	# 2. Databussar (Grusgångar med struktur) istället för bara solid färg
+	var dirt_tex = preload("res://assets/Tileset/Tilled Soil.png")
 	
-	# Fasta 3x3 Odlingslådor vid hubbarna
+	var draw_path = func(rect: Rect2):
+		for px in range(0, rect.size.x, 32):
+			for py in range(0, rect.size.y, 32):
+				var dirt = Sprite2D.new()
+				dirt.texture = dirt_tex
+				dirt.region_enabled = true
+				dirt.region_rect = Rect2(16, 0, 16, 16) # Fin grus/jord
+				dirt.scale = Vector2(2, 2)
+				dirt.position = rect.position + Vector2(px + 16, py + 16)
+				dirt.z_index = -15
+				world_bg.add_child(dirt)
+				
+	draw_path.call(Rect2(Vector2(-16, -110), Vector2(32, 360))) # V-buss
+	draw_path.call(Rect2(Vector2(-250, 84), Vector2(500, 32)))  # H-buss
+	
+	# 3. Fasta 3x3 Odlingslådor vid hubbarna, med en liten ram av jord
 	var soil_tex = preload("res://assets/Tileset/Tilled Soil.png")
 	for hub in hubs:
 		for x in [-1, 0, 1]:
@@ -246,7 +268,7 @@ func place_world_objects() -> void:
 				soil.z_index = -10
 				world_bg.add_child(soil)
 
-	# Shipping Box (Bucket)
+	# 4. Shipping Box (Bucket)
 	var box = Sprite2D.new()
 	box.texture = preload("res://assets/Objects/shipping box.png")
 	box.region_enabled = true
@@ -256,6 +278,7 @@ func place_world_objects() -> void:
 	box.z_index = -5
 	world_bg.add_child(box)
 
+	# 5. Huset (CPU)
 	var house = Sprite2D.new()
 	house.texture = preload("res://assets/Objects/House.png")
 	house.region_enabled = true
@@ -265,10 +288,13 @@ func place_world_objects() -> void:
 	house.z_index = -5
 	world_bg.add_child(house)
 	
+	# 6. Träd (Ram) - Bygg en mycket tätare och mysigare skog runt kanterna!
 	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
 	var t_pos = [
-		Vector2(-450, -300), Vector2(450, -300), Vector2(-450, 300), Vector2(450, 300),
-		Vector2(-450, 0), Vector2(450, 0), Vector2(-200, -350), Vector2(200, -350)
+		Vector2(-450, -300), Vector2(-350, -350), Vector2(-250, -380), Vector2(250, -380), Vector2(350, -350), Vector2(450, -300),
+		Vector2(-450, -150), Vector2(450, -150), Vector2(-450, 0), Vector2(450, 0),
+		Vector2(-450, 150), Vector2(450, 150), Vector2(-450, 300), Vector2(450, 300),
+		Vector2(-350, 400), Vector2(-200, 420), Vector2(200, 420), Vector2(350, 400)
 	]
 	for p in t_pos:
 		var tree = Sprite2D.new()
@@ -276,6 +302,6 @@ func place_world_objects() -> void:
 		tree.region_enabled = true
 		tree.region_rect = Rect2(96, 0, 32, 48)
 		tree.scale = Vector2(3.5, 3.5)
-		tree.position = p
+		tree.position = p + Vector2(randf_range(-20, 20), randf_range(-20, 20)) # Lite slumpmässig offset
 		tree.z_index = 5
 		world_bg.add_child(tree)
