@@ -10,7 +10,7 @@ script = ExtResource("1_gamemgr")
 [node name="ApiClient" type="Node" parent="."]
 script = ExtResource("2_apiclient")
 backend_url = "https://web-production-76e9c.up.railway.app"
-poll_interval = 10.0
+poll_interval = 2.0
 
 [node name="StatusLabel" type="Label" parent="."]
 offset_left = 30.0

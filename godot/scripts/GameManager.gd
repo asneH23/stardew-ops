@@ -43,7 +43,7 @@ func _on_reroll_pressed(slot: int, btn: Button) -> void:
 
 
 func _on_state_updated(state: Dictionary) -> void:
-	status_label.text = "✅ Ansluten  |  Uppdateras var 10:e sekund"
+	status_label.text = "✅ Ansluten  |  Uppdateras var 2:a sekund"
 
 	var total_xp: int = state.get("total_xp", 0)
 	var level: int = state.get("level", 1)
