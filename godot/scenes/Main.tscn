@@ -25,7 +25,7 @@ offset_left = -1000.0
 offset_top = -1000.0
 offset_right = 2000.0
 offset_bottom = 2000.0
-color = Color(0.36, 0.65, 0.35, 0)
+color = Color(0.45, 0.73, 0.43, 1)
 
 [node name="FarmMap" type="TileMapLayer" parent="."]
 offset_right = 1200.0

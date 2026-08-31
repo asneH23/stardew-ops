@@ -145,7 +145,7 @@ func plant_crop(total_xp: int) -> void:
 	
 	# Skär ut en 16x16 gröda baserat på XP (flyttar rutan längs X-axeln)
 	var crop_index = (total_xp / 50) % 5
-	crop.region_rect = Rect2(crop_index * 16, 48, 16, 16)
+	crop.region_rect = Rect2(0, 0, 32, 32)
 	crop.scale = Vector2(2, 2)
 	
 	# Plantera vid spelarens fötter
@@ -165,7 +165,7 @@ func draw_pixel_grass() -> void:
 			var tile = Sprite2D.new()
 			tile.texture = grass_texture
 			tile.region_enabled = true
-			tile.region_rect = Rect2(0, 0, 16, 16) # Högst upp till vänster är oftast standardgräs
+			tile.region_rect = Rect2(16, 16, 16, 16) # Högst upp till vänster är oftast standardgräs
 			tile.scale = Vector2(2, 2)
 			tile.position = Vector2(x * 32, y * 32)
 			tile.z_index = 1 # Längst bak
