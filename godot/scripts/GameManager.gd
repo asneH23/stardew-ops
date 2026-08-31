@@ -84,12 +84,33 @@ func _on_state_updated(state: Dictionary) -> void:
 		last_known_xp = total_xp
 		_instantly_plant_history(total_xp)
 	elif total_xp > last_known_xp:
+		var gained_xp = total_xp - last_known_xp
+		_spawn_floating_text("+%d XP!" % gained_xp, house_door + Vector2(0, -60), Color(0.2, 1.0, 0.4))
+		
 		var new_crops = (total_xp / 50) - (last_known_xp / 50)
 		for i in range(new_crops):
-			var xp_val = last_known_xp + ((i + 1) * 50)
+			# Vi lägger till grödor i kön om vi passerat en 50-gräns
+			var xp_val = (last_known_xp / 50 + i + 1) * 50
 			planting_queue.append(xp_val)
 		last_known_xp = total_xp
 		process_planting_queue()
+
+func _spawn_floating_text(text: String, pos: Vector2, color: Color) -> void:
+	var label = Label.new()
+	label.text = text
+	label.position = pos
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	label.add_theme_constant_override("outline_size", 5)
+	
+	# Gör texten stor och fet om möjligt
+	label.scale = Vector2(1.5, 1.5)
+	crops_node.add_child(label)
+	
+	var tween = get_tree().create_tween().set_parallel(true)
+	tween.tween_property(label, "position", label.position + Vector2(0, -50), 2.0).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(label, "modulate:a", 0.0, 2.0).set_trans(Tween.TRANS_QUAD)
+	tween.chain().tween_callback(label.queue_free)
 
 func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
