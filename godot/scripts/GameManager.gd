@@ -47,7 +47,17 @@ func _input(event: InputEvent) -> void:
 			target_zoom += Vector2(0.15, 0.15)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			target_zoom -= Vector2(0.15, 0.15)
-		target_zoom = target_zoom.clamp(MIN_ZOOM, MAX_ZOOM)
+	elif event is InputEventPanGesture:
+		# För Mac-trackpads!
+		target_zoom -= Vector2(event.delta.y, event.delta.y) * 0.05
+	elif event is InputEventKey and event.is_pressed():
+		# Keyboard fallback (Q/E eller +/-)
+		if event.keycode == KEY_E or event.keycode == KEY_PLUS or event.keycode == KEY_EQUAL:
+			target_zoom += Vector2(0.2, 0.2)
+		elif event.keycode == KEY_Q or event.keycode == KEY_MINUS:
+			target_zoom -= Vector2(0.2, 0.2)
+			
+	target_zoom = target_zoom.clamp(MIN_ZOOM, MAX_ZOOM)
 		
 func _setup_camera() -> void:
 	camera = player.get_node_or_null("Camera2D")
@@ -236,27 +246,52 @@ func place_world_objects() -> void:
 		tuft.modulate.a = 0.6 # Gör dem lite subtila i bakgrunden
 		world_bg.add_child(tuft)
 	
-	# 2. Databussar (Grusgångar med struktur) istället för bara solid färg
-	var dirt_tex = preload("res://assets/Tileset/Tilled Soil.png")
+	# 2. Databussar (Symmetriska krets-gångar)
+	var path_color_border = Color(0.35, 0.23, 0.14, 1) # Mörkbrun kant
+	var path_color_fill = Color(0.68, 0.49, 0.32, 1)   # Ljus sand-fyllning
 	
-	var draw_path = func(rect: Rect2):
-		for px in range(0, rect.size.x, 32):
-			for py in range(0, rect.size.y, 32):
-				var dirt = Sprite2D.new()
-				dirt.texture = dirt_tex
-				dirt.region_enabled = true
-				dirt.region_rect = Rect2(16, 0, 16, 16) # Fin grus/jord
-				dirt.scale = Vector2(2, 2)
-				dirt.position = rect.position + Vector2(px + 16, py + 16)
-				dirt.z_index = -15
-				world_bg.add_child(dirt)
-				
-	draw_path.call(Rect2(Vector2(-16, -110), Vector2(32, 360))) # V-buss
-	draw_path.call(Rect2(Vector2(-250, 84), Vector2(500, 32)))  # H-buss
+	# Vertikal buss
+	var bus_v_border = ColorRect.new()
+	bus_v_border.color = path_color_border
+	bus_v_border.position = Vector2(-22, -112)
+	bus_v_border.size = Vector2(44, 384)
+	bus_v_border.z_index = -16
+	world_bg.add_child(bus_v_border)
 	
-	# 3. Fasta 3x3 Odlingslådor vid hubbarna, med en liten ram av jord
+	var bus_v_fill = ColorRect.new()
+	bus_v_fill.color = path_color_fill
+	bus_v_fill.position = Vector2(-18, -110)
+	bus_v_fill.size = Vector2(36, 380)
+	bus_v_fill.z_index = -15
+	world_bg.add_child(bus_v_fill)
+	
+	# Horisontell buss
+	var bus_h_border = ColorRect.new()
+	bus_h_border.color = path_color_border
+	bus_h_border.position = Vector2(-252, 82)
+	bus_h_border.size = Vector2(504, 44)
+	bus_h_border.z_index = -16
+	world_bg.add_child(bus_h_border)
+	
+	var bus_h_fill = ColorRect.new()
+	bus_h_fill.color = path_color_fill
+	bus_h_fill.position = Vector2(-250, 86)
+	bus_h_fill.size = Vector2(500, 36)
+	bus_h_fill.z_index = -15
+	world_bg.add_child(bus_h_fill)
+	
+	# 3. Fasta 3x3 Odlingslådor vid hubbarna, med en liten ram
 	var soil_tex = preload("res://assets/Tileset/Tilled Soil.png")
 	for hub in hubs:
+		# Mörk border under lådorna
+		var plot_border = ColorRect.new()
+		plot_border.color = path_color_border
+		plot_border.position = hub + Vector2(-54, -54)
+		plot_border.size = Vector2(108, 108)
+		plot_border.z_index = -11
+		world_bg.add_child(plot_border)
+		
+		# Tilled soil tiles
 		for x in [-1, 0, 1]:
 			for y in [-1, 0, 1]:
 				var soil = Sprite2D.new()
