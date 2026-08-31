@@ -24,21 +24,38 @@ var hubs = [
 ]
 var house_door = Vector2(0, -110)
 
+var camera: Camera2D
+var target_zoom: Vector2 = Vector2(1.2, 1.2)
+const MIN_ZOOM = Vector2(0.5, 0.5)
+const MAX_ZOOM = Vector2(3.0, 3.0)
+
 func _ready() -> void:
 	_setup_camera()
 	place_world_objects()
 	
 	api_client.state_updated.connect(_on_state_updated)
 	api_client.connection_error.connect(_on_connection_error)
-	
+
+func _process(delta: float) -> void:
+	if camera:
+		camera.zoom = camera.zoom.lerp(target_zoom, 8.0 * delta)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			target_zoom += Vector2(0.1, 0.1)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			target_zoom -= Vector2(0.1, 0.1)
+		target_zoom = target_zoom.clamp(MIN_ZOOM, MAX_ZOOM)
+		
 func _setup_camera() -> void:
 	# Flytta kameran från Player till Main för statisk vy
-	var cam = player.get_node_or_null("Camera2D")
-	if cam:
-		player.remove_child(cam)
-		add_child(cam)
-		cam.position = Vector2(0, 0)
-		cam.zoom = Vector2(1.2, 1.2)
+	camera = player.get_node_or_null("Camera2D")
+	if camera:
+		player.remove_child(camera)
+		add_child(camera)
+		camera.position = Vector2(0, 0)
+		camera.zoom = target_zoom
 
 func _on_state_updated(state: Dictionary) -> void:
 	var total_xp = int(state.get("total_xp", 0))
@@ -107,27 +124,43 @@ func _on_arrived_at_hub(xp_val: int, target_hub: Vector2, path_taken: Array) -> 
 	)
 
 func _spawn_crop(xp_val: int, hub_pos: Vector2, animate: bool = false) -> void:
+	# 1. Räkna ut var vi är i gridet
+	var crop_count_at_this_hub = (xp_val / 50) / 3
+	var slot = crop_count_at_this_hub
+	var cols = 6 # Max 6 bred
+	var slot_x = (slot % cols) - (cols / 2)
+	var slot_y = slot / cols
+	var final_pos = hub_pos + Vector2(slot_x * 32, slot_y * 32)
+	
+	# 2. Spawna jordplätt under
+	var soil = Sprite2D.new()
+	soil.texture = preload("res://assets/Tileset/Tilled Soil.png")
+	soil.region_enabled = true
+	soil.region_rect = Rect2(64, 0, 16, 16)
+	soil.scale = Vector2(2, 2)
+	soil.position = final_pos
+	soil.z_index = -10
+	crops_node.add_child(soil)
+
+	# 3. Spawna växten
 	var crop = Sprite2D.new()
-	crop.texture = preload("res://assets/Objects/All Crops.png")
+	crop.texture = preload("res://assets/Objects/Spring Crops.png")
 	crop.region_enabled = true
 	
+	# Plocka ut fina växter med blad (X=64 eller X=80 på Spring Crops sheetet)
+	# Y-koordinater för olika plantor är multiplar av 16, eller 32 om de är höga.
+	# Vi tar några säkra 16x16 lummiga växter:
 	var crop_rects = [
-		Rect2(96, 32, 16, 16),    # Jordgubbe
-		Rect2(224, 64, 16, 16),   # Tomat
-		Rect2(96, 112, 16, 16),   # Morot
-		Rect2(96, 48, 16, 16),    # Potatis
-		Rect2(96, 176, 16, 16),   # Broccoli
+		Rect2(64, 0, 16, 16),
+		Rect2(80, 16, 16, 16),
+		Rect2(64, 32, 16, 16),
+		Rect2(80, 48, 16, 16),
+		Rect2(64, 64, 16, 16)
 	]
 	crop.region_rect = crop_rects[(xp_val / 50) % crop_rects.size()]
 	crop.scale = Vector2(2.5, 2.5)
-	
-	# Placera i 3x3 rutnät vid hubben
-	var crop_count_at_this_hub = (xp_val / 50) / 3
-	var slot = crop_count_at_this_hub % 9
-	var slot_x = (slot % 3) - 1
-	var slot_y = (slot / 3) - 1
-	crop.position = hub_pos + Vector2(slot_x * 32, slot_y * 32)
-	
+	crop.position = final_pos
+	crop.z_index = -5
 	crops_node.add_child(crop)
 	
 	if animate:
@@ -135,6 +168,20 @@ func _spawn_crop(xp_val: int, hub_pos: Vector2, animate: bool = false) -> void:
 		var tween = get_tree().create_tween()
 		tween.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 		tween.tween_property(crop, "scale", Vector2(2.5, 2.5), 0.8)
+		
+		# Dopamin-text (Floating XP Text)
+		var label = Label.new()
+		label.text = "+50 XP"
+		label.position = final_pos + Vector2(-20, -20)
+		label.add_theme_color_override("font_color", Color(1, 0.8, 0.2)) # Guld
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		label.add_theme_constant_override("outline_size", 4)
+		crops_node.add_child(label)
+		
+		var label_tween = get_tree().create_tween().set_parallel(true)
+		label_tween.tween_property(label, "position", label.position + Vector2(0, -40), 1.5)
+		label_tween.tween_property(label, "modulate:a", 0.0, 1.5)
+		label_tween.chain().tween_callback(label.queue_free)
 
 func place_world_objects() -> void:
 	# 1. Grön Kretskort-bakgrund
@@ -160,19 +207,8 @@ func place_world_objects() -> void:
 	bus_h.z_index = -15
 	world_bg.add_child(bus_h)
 	
-	# 3. Noder (Odlingslådor) vid hubbarna
-	var soil_tex = preload("res://assets/Tileset/Tilled Soil.png")
-	for hub in hubs:
-		for x in range(-1, 2):
-			for y in range(-1, 2):
-				var soil = Sprite2D.new()
-				soil.texture = soil_tex
-				soil.region_enabled = true
-				soil.region_rect = Rect2(64, 0, 16, 16)
-				soil.scale = Vector2(2, 2)
-				soil.position = hub + Vector2(x * 32, y * 32)
-				soil.z_index = -10
-				world_bg.add_child(soil)
+	# 3. Noder (Odlingslådor) vid hubbarna (Skapas nu dynamiskt i _spawn_crop!)
+	# Endast start-noden eller helt tomt, vi låter det vara tomt så jorden växer organiskt!
 
 	# 4. Huset (CPU)
 	var house = Sprite2D.new()
