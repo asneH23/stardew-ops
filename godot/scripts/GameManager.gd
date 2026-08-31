@@ -140,62 +140,84 @@ func _on_connection_error(message: String) -> void:
 func place_world_objects() -> void:
 	var world_bg = $WorldBackground
 
-	# House — show full sprite, no region clipping
+	# 1. Base Green Ground (Clean and flat, no grey gaps)
+	var base = ColorRect.new()
+	base.color = Color(0.42, 0.69, 0.37, 1)  # Warm Stardew-green
+	base.position = Vector2(-1200, -1200)
+	base.size = Vector2(2400, 2400)
+	base.z_index = -20
+	world_bg.add_child(base)
+
+	# 2. Tilled Soil Area in the center (9x7 grid, perfectly aligned)
+	var soil_tex = preload("res://assets/Tileset/Tilled Soil.png")
+	for fx in range(-6, 7):
+		for fy in range(2, 9):
+			var soil = Sprite2D.new()
+			soil.texture = soil_tex
+			soil.region_enabled = true
+			soil.region_rect = Rect2(64, 0, 16, 16) # Dry tilled soil tile
+			soil.scale = Vector2(2, 2)
+			soil.position = Vector2(fx * 32, fy * 32)
+			soil.z_index = -9
+			world_bg.add_child(soil)
+
+	# 3. Completed House (No floating windows, chimney attached)
 	var house_tex = preload("res://assets/Objects/House.png")
 	var house = Sprite2D.new()
 	house.texture = house_tex
-	# House.png is 224x112. The actual house is left ~100px, rest is modular pieces.
-	# We clip just the left building + roof
 	house.region_enabled = true
-	house.region_rect = Rect2(0, 0, 100, 112)
+	# Right-most house in the sheet is the fully completed version
+	house.region_rect = Rect2(144, 0, 80, 112)
 	house.scale = Vector2(3, 3)
-	house.position = Vector2(-300, -260)
+	house.position = Vector2(-300, -200)
 	house.z_index = 5
 	world_bg.add_child(house)
 
-	# Trees — Maple Tree.png is 160x48, 5 frames × 32px wide
-	# Frame index 3 (x=96) = nicely-sized full tree with visible canopy
+	# 4. Beautiful Full-Grown Maple Trees (Not stumps!)
 	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
 	var tree_positions = [
-		Vector2(-480, -350), Vector2(-480, -150), Vector2(-480, 50),
-		Vector2(-480,  250), Vector2( 420, -350), Vector2( 420, -150),
-		Vector2( 420,   50), Vector2( 420,  250),
+		Vector2(-480, -320), Vector2(-480, -120), Vector2(-480, 80),
+		Vector2(-480,  280), Vector2( 420, -320), Vector2( 420, -120),
+		Vector2( 420,   80), Vector2( 420,  280),
 		Vector2(-100, -350), Vector2( 100, -350),
 	]
 	for pos in tree_positions:
 		var tree = Sprite2D.new()
 		tree.texture = tree_tex
 		tree.region_enabled = true
-		tree.region_rect = Rect2(96, 0, 32, 48)
-		tree.scale = Vector2(4, 4)
+		tree.region_rect = Rect2(96, 0, 32, 48) # Frame 3 = beautiful large tree
+		tree.scale = Vector2(3.5, 3.5)
 		tree.position = pos
 		tree.z_index = 3
 		world_bg.add_child(tree)
 
 func plant_crop(total_xp: int) -> void:
-	# All Crops.png = 416x288
-	# Each crop has ~5 growth stages horizontally, multiple crops vertically
-	# Columns 0-4 = growth stages (0=seed ... 4=ripe)
-	# Each cell is 16x16px, with a small gap/icon at end
-	# We pick col 4 = ripe stage
 	var crop_tex = preload("res://assets/Objects/All Crops.png")
 	var crop = Sprite2D.new()
 	crop.texture = crop_tex
 	crop.region_enabled = true
 
-	# Row = which crop type (cycles with XP)
-	var crop_row = (total_xp / 50) % 8
-	# Col 4 = the ripe/harvested version of each crop
-	crop.region_rect = Rect2(4 * 32, crop_row * 32, 32, 32)
-	crop.scale = Vector2(3, 3)
+	# Exact pixel coords for 5 different fully ripe crops:
+	# 0: Strawberry, 1: Tomato, 2: Carrot, 3: Potato, 4: Broccoli
+	var crop_rects = [
+		Rect2(96, 32, 16, 16),    # Strawberry
+		Rect2(224, 64, 16, 16),   # Tomato
+		Rect2(96, 112, 16, 16),   # Carrot
+		Rect2(96, 48, 16, 16),    # Potato
+		Rect2(96, 176, 16, 16),   # Broccoli
+	]
+	
+	var index = (total_xp / 50) % crop_rects.size()
+	crop.region_rect = crop_rects[index]
+	crop.scale = Vector2(2.5, 2.5)
 
-	# Snap to grid
+	# Plant on the soil grid at player's position
 	var grid_pos = (player.global_position / 32.0).floor() * 32.0
-	crop.position = grid_pos
+	crop.position = grid_pos + Vector2(0, 4)
 	crops_node.add_child(crop)
 
-	# Pop-in spring animation
+	# Pop-in animation
 	crop.scale = Vector2.ZERO
 	var tween = get_tree().create_tween()
 	tween.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(crop, "scale", Vector2(3, 3), 0.8)
+	tween.tween_property(crop, "scale", Vector2(2.5, 2.5), 0.8)
