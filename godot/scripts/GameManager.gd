@@ -23,6 +23,7 @@ var hubs = [
 	Vector2(0, 250)
 ]
 var house_door = Vector2(0, -110)
+var shipping_box_pos = Vector2(100, -200)
 
 var camera: Camera2D
 var target_zoom: Vector2 = Vector2(1.2, 1.2)
@@ -49,7 +50,6 @@ func _input(event: InputEvent) -> void:
 		target_zoom = target_zoom.clamp(MIN_ZOOM, MAX_ZOOM)
 		
 func _setup_camera() -> void:
-	# Flytta kameran från Player till Main för statisk vy
 	camera = player.get_node_or_null("Camera2D")
 	if camera:
 		player.remove_child(camera)
@@ -86,9 +86,20 @@ func _on_connection_error(message: String) -> void:
 func _instantly_plant_history(total_xp: int) -> void:
 	var total_crops = total_xp / 50
 	for i in range(total_crops):
-		var xp_val = (i + 1) * 50
-		var hub_index = (xp_val / 50) % 3
-		_spawn_crop(xp_val, hubs[hub_index])
+		var xp_val = (i * 50) # Use 0-indexed for history placement
+		var hub_index = i % 3
+		var crops_at_hub = i / 3
+		var slot = crops_at_hub % 9
+		
+		# Bara spawna om vi är i den "aktuella" cykeln
+		var current_cycle = (total_crops / 3) / 9
+		var this_crop_cycle = crops_at_hub / 9
+		
+		if this_crop_cycle == current_cycle:
+			_spawn_crop(i, hubs[hub_index])
+		elif this_crop_cycle == current_cycle - 1 and (total_crops / 3) % 9 == 0:
+			# If exactly wrapped, show the full previous cycle until the 10th arrives
+			_spawn_crop(i, hubs[hub_index])
 
 func process_planting_queue() -> void:
 	if is_player_busy or planting_queue.size() == 0:
@@ -96,7 +107,10 @@ func process_planting_queue() -> void:
 		
 	is_player_busy = true
 	var xp_val = planting_queue.pop_front()
-	var hub_index = (xp_val / 50) % 3
+	var crop_index = (xp_val / 50) - 1 # 0-indexed
+	var hub_index = crop_index % 3
+	var crops_at_hub = crop_index / 3
+	var slot = crops_at_hub % 9
 	var target_hub = hubs[hub_index]
 	
 	var path = [house_door]
@@ -107,12 +121,42 @@ func process_planting_queue() -> void:
 		path.append(target_hub)
 		
 	player.global_position = house_door
-	player.follow_path(path, func(): _on_arrived_at_hub(xp_val, target_hub, path))
-
-func _on_arrived_at_hub(xp_val: int, target_hub: Vector2, path_taken: Array) -> void:
-	_spawn_crop(xp_val, target_hub, true)
 	
-	# Vänta lite, gå sen hem
+	# Om vi precis wrappade (slot 0 och crops_at_hub > 0), rensa hubben först!
+	if slot == 0 and crops_at_hub > 0:
+		player.follow_path(path, func(): _harvest_and_plant(crop_index, target_hub, path))
+	else:
+		player.follow_path(path, func(): _on_arrived_at_hub(crop_index, target_hub, path))
+
+func _harvest_and_plant(crop_index: int, target_hub: Vector2, path_taken: Array) -> void:
+	# Skörde-animation
+	for child in crops_node.get_children():
+		if child is Sprite2D and child.position.distance_to(target_hub) < 80:
+			# Sväva upp och försvinn
+			var tween = get_tree().create_tween().set_parallel(true)
+			tween.tween_property(child, "position", child.position + Vector2(0, -50), 0.5)
+			tween.tween_property(child, "modulate:a", 0.0, 0.5)
+			tween.chain().tween_callback(child.queue_free)
+			
+	# Extra dopamin-text
+	var label = Label.new()
+	label.text = "HARVEST! +BONUS"
+	label.position = target_hub + Vector2(-40, -40)
+	label.add_theme_color_override("font_color", Color(1, 0.5, 0.0))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	label.add_theme_constant_override("outline_size", 4)
+	crops_node.add_child(label)
+	var label_tween = get_tree().create_tween().set_parallel(true)
+	label_tween.tween_property(label, "position", label.position + Vector2(0, -60), 2.0)
+	label_tween.tween_property(label, "modulate:a", 0.0, 2.0)
+	label_tween.chain().tween_callback(label.queue_free)
+	
+	await get_tree().create_timer(1.0).timeout
+	_on_arrived_at_hub(crop_index, target_hub, path_taken)
+
+func _on_arrived_at_hub(crop_index: int, target_hub: Vector2, path_taken: Array) -> void:
+	_spawn_crop(crop_index, target_hub, true)
+	
 	await get_tree().create_timer(1.0).timeout
 	var return_path = path_taken.duplicate()
 	return_path.reverse()
@@ -123,33 +167,17 @@ func _on_arrived_at_hub(xp_val: int, target_hub: Vector2, path_taken: Array) -> 
 		process_planting_queue()
 	)
 
-func _spawn_crop(xp_val: int, hub_pos: Vector2, animate: bool = false) -> void:
-	# 1. Räkna ut var vi är i gridet
-	var crop_count_at_this_hub = (xp_val / 50) / 3
-	var slot = crop_count_at_this_hub
-	var cols = 6 # Max 6 bred
-	var slot_x = (slot % cols) - (cols / 2)
-	var slot_y = slot / cols
+func _spawn_crop(crop_index: int, hub_pos: Vector2, animate: bool = false) -> void:
+	var crops_at_hub = crop_index / 3
+	var slot = crops_at_hub % 9
+	var slot_x = (slot % 3) - 1
+	var slot_y = (slot / 3) - 1
 	var final_pos = hub_pos + Vector2(slot_x * 32, slot_y * 32)
 	
-	# 2. Spawna jordplätt under
-	var soil = Sprite2D.new()
-	soil.texture = preload("res://assets/Tileset/Tilled Soil.png")
-	soil.region_enabled = true
-	soil.region_rect = Rect2(64, 0, 16, 16)
-	soil.scale = Vector2(2, 2)
-	soil.position = final_pos
-	soil.z_index = -10
-	crops_node.add_child(soil)
-
-	# 3. Spawna växten
 	var crop = Sprite2D.new()
 	crop.texture = preload("res://assets/Objects/Spring Crops.png")
 	crop.region_enabled = true
 	
-	# Plocka ut fina växter med blad (X=64 eller X=80 på Spring Crops sheetet)
-	# Y-koordinater för olika plantor är multiplar av 16, eller 32 om de är höga.
-	# Vi tar några säkra 16x16 lummiga växter:
 	var crop_rects = [
 		Rect2(64, 0, 16, 16),
 		Rect2(80, 16, 16, 16),
@@ -157,7 +185,7 @@ func _spawn_crop(xp_val: int, hub_pos: Vector2, animate: bool = false) -> void:
 		Rect2(80, 48, 16, 16),
 		Rect2(64, 64, 16, 16)
 	]
-	crop.region_rect = crop_rects[(xp_val / 50) % crop_rects.size()]
+	crop.region_rect = crop_rects[crop_index % crop_rects.size()]
 	crop.scale = Vector2(2.5, 2.5)
 	crop.position = final_pos
 	crop.z_index = -5
@@ -169,11 +197,10 @@ func _spawn_crop(xp_val: int, hub_pos: Vector2, animate: bool = false) -> void:
 		tween.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 		tween.tween_property(crop, "scale", Vector2(2.5, 2.5), 0.8)
 		
-		# Dopamin-text (Floating XP Text)
 		var label = Label.new()
 		label.text = "+50 XP"
 		label.position = final_pos + Vector2(-20, -20)
-		label.add_theme_color_override("font_color", Color(1, 0.8, 0.2)) # Guld
+		label.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
 		label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 		label.add_theme_constant_override("outline_size", 4)
 		crops_node.add_child(label)
@@ -184,7 +211,6 @@ func _spawn_crop(xp_val: int, hub_pos: Vector2, animate: bool = false) -> void:
 		label_tween.chain().tween_callback(label.queue_free)
 
 func place_world_objects() -> void:
-	# 1. Grön Kretskort-bakgrund
 	var base = ColorRect.new()
 	base.color = Color(0.42, 0.69, 0.37, 1)
 	base.position = Vector2(-1200, -1200)
@@ -192,9 +218,8 @@ func place_world_objects() -> void:
 	base.z_index = -20
 	world_bg.add_child(base)
 	
-	# 2. Databussar (Grusgångar/Traces)
 	var bus_v = ColorRect.new()
-	bus_v.color = Color(0.63, 0.45, 0.28, 1) # Jordbrun
+	bus_v.color = Color(0.63, 0.45, 0.28, 1)
 	bus_v.position = Vector2(-20, -110)
 	bus_v.size = Vector2(40, 380)
 	bus_v.z_index = -15
@@ -207,10 +232,30 @@ func place_world_objects() -> void:
 	bus_h.z_index = -15
 	world_bg.add_child(bus_h)
 	
-	# 3. Noder (Odlingslådor) vid hubbarna (Skapas nu dynamiskt i _spawn_crop!)
-	# Endast start-noden eller helt tomt, vi låter det vara tomt så jorden växer organiskt!
+	# Fasta 3x3 Odlingslådor vid hubbarna
+	var soil_tex = preload("res://assets/Tileset/Tilled Soil.png")
+	for hub in hubs:
+		for x in [-1, 0, 1]:
+			for y in [-1, 0, 1]:
+				var soil = Sprite2D.new()
+				soil.texture = soil_tex
+				soil.region_enabled = true
+				soil.region_rect = Rect2(64, 0, 16, 16)
+				soil.scale = Vector2(2, 2)
+				soil.position = hub + Vector2(x * 32, y * 32)
+				soil.z_index = -10
+				world_bg.add_child(soil)
 
-	# 4. Huset (CPU)
+	# Shipping Box (Bucket)
+	var box = Sprite2D.new()
+	box.texture = preload("res://assets/Objects/shipping box.png")
+	box.region_enabled = true
+	box.region_rect = Rect2(0, 0, 48, 64)
+	box.scale = Vector2(2, 2)
+	box.position = shipping_box_pos
+	box.z_index = -5
+	world_bg.add_child(box)
+
 	var house = Sprite2D.new()
 	house.texture = preload("res://assets/Objects/House.png")
 	house.region_enabled = true
@@ -220,7 +265,6 @@ func place_world_objects() -> void:
 	house.z_index = -5
 	world_bg.add_child(house)
 	
-	# 5. Träd (Ram)
 	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
 	var t_pos = [
 		Vector2(-450, -300), Vector2(450, -300), Vector2(-450, 300), Vector2(450, 300),
