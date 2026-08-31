@@ -145,7 +145,7 @@ func plant_crop(total_xp: int) -> void:
 	
 	# Skär ut en 16x16 gröda baserat på XP (flyttar rutan längs X-axeln)
 	var crop_index = (total_xp / 50) % 5
-	crop.region_rect = Rect2(crop_index * 16, 0, 16, 16)
+	crop.region_rect = Rect2(crop_index * 16, 48, 16, 16)
 	crop.scale = Vector2(2, 2)
 	
 	# Plantera vid spelarens fötter
