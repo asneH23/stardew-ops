@@ -318,7 +318,7 @@ def debug_ai():
     
     try:
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-3.5-flash-lite')
         resp = model.generate_content("Säg hej kort!")
         return {"success": True, "response": resp.text.strip(), "key_start": key[:4]}
     except Exception as e:
