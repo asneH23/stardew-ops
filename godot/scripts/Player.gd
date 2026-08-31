@@ -19,6 +19,7 @@ func _physics_process(delta: float) -> void:
 		if sprite.texture != walk_texture:
 			sprite.texture = walk_texture
 			sprite.hframes = 6
+			sprite.vframes = 3
 			current_frame = 0
 		
 		# Vänd spelaren åt rätt håll
@@ -31,6 +32,7 @@ func _physics_process(delta: float) -> void:
 		if sprite.texture != idle_texture:
 			sprite.texture = idle_texture
 			sprite.hframes = 4
+			sprite.vframes = 3
 			current_frame = 0
 
 	move_and_slide()

@@ -53,6 +53,7 @@ zoom = Vector2(1.5, 1.5)
 [node name="Sprite2D" type="Sprite2D" parent="Player"]
 texture = ExtResource("4_player_sprite")
 hframes = 4
+vframes = 3
 scale = Vector2(2, 2)
 
 [node name="UI" type="CanvasLayer" parent="."]

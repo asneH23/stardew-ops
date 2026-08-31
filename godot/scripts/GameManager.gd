@@ -168,5 +168,5 @@ func draw_pixel_grass() -> void:
 			tile.region_rect = Rect2(0, 0, 16, 16) # Högst upp till vänster är oftast standardgräs
 			tile.scale = Vector2(2, 2)
 			tile.position = Vector2(x * 32, y * 32)
-			tile.z_index = -10 # Längst bak
+			tile.z_index = 1 # Längst bak
 			$WorldBackground.add_child(tile)
