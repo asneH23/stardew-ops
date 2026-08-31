@@ -1,0 +1,19 @@
+FOLDERS - Characters/NPCS
+
+info: 
+What's Included in This Update
+4 fully customizable NPC portraits.
+Aseprite source files included.
+Each portrait includes 9 expressions:
+Neutral
+Happy
+Smiling
+Sad
+Crying
+Angry
+Surprised
+Thoughtful
+Scared
+
+
+

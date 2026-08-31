@@ -137,36 +137,92 @@ func spawn_floating_xp(amount: int) -> void:
 func _on_connection_error(message: String) -> void:
 	status_label.text = "❌ " + message
 
-func plant_crop(total_xp: int) -> void:
-	# Ladda den riktiga grödo-bilden istället för emoji!
-	var crop = Sprite2D.new()
-	crop.texture = preload("res://assets/Objects/Spring Crops.png")
-	crop.region_enabled = true
-	
-	# Skär ut en 16x16 gröda baserat på XP (flyttar rutan längs X-axeln)
-	var crop_index = (total_xp / 50) % 5
-	crop.region_rect = Rect2(0, 0, 32, 32)
-	crop.scale = Vector2(2, 2)
-	
-	# Plantera vid spelarens fötter
-	crop.position = player.global_position + Vector2(0, 10)
-	crops_node.add_child(crop)
-	
-	# Pop-in animation
-	crop.scale = Vector2.ZERO
-	var tween = get_tree().create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(crop, "scale", Vector2(2, 2), 1.0)
-
-# Rita ut en riktig gräsmatta av pixel-grafik när spelet startar!
 func draw_pixel_grass() -> void:
-	var grass_texture = preload("res://assets/Tileset/Tileset Spring.png")
-	for x in range(-20, 20):
-		for y in range(-20, 20):
-			var tile = Sprite2D.new()
-			tile.texture = grass_texture
+	# Tileset Grass Spring.png = 384x640, 16x16 tiles
+	# The top-left 16x16 block is pure green grass — confirmed from image
+	var grass_tex = preload("res://assets/Tileset/Tileset Grass Spring.png")
+	var soil_tex  = preload("res://assets/Tileset/Tilled Soil.png")
+	var world_bg  = $WorldBackground
+
+	# Draw 40x30 grass tiles (each 32px scaled = 1280x960 world area)
+	for x in range(-20, 22):
+		for y in range(-16, 18):
+			var tile      = Sprite2D.new()
+			tile.texture  = grass_tex
 			tile.region_enabled = true
-			tile.region_rect = Rect2(16, 16, 16, 16) # Högst upp till vänster är oftast standardgräs
-			tile.scale = Vector2(2, 2)
+			# Row 0, col 0 in the 16x16 grid = 0,0 → pure grass tile
+			tile.region_rect = Rect2(16, 0, 16, 16)
+			tile.scale    = Vector2(2, 2)
 			tile.position = Vector2(x * 32, y * 32)
-			tile.z_index = 1 # Längst bak
-			$WorldBackground.add_child(tile)
+			tile.z_index  = -10
+			world_bg.add_child(tile)
+
+	# Draw a tilled-soil field in the centre (where crops will grow)
+	for fx in range(-6, 7):
+		for fy in range(2, 9):
+			var soil      = Sprite2D.new()
+			soil.texture  = soil_tex
+			soil.region_enabled = true
+			# Tilled Soil.png = 384x128; dry tilled soil tile = col 0, row 0 = Rect2(0,0,16,16)
+			soil.region_rect = Rect2(0, 0, 16, 16)
+			soil.scale    = Vector2(2, 2)
+			soil.position = Vector2(fx * 32, fy * 32)
+			soil.z_index  = -9
+			world_bg.add_child(soil)
+
+	# Place the house sprite (top-left of farm)
+	var house_tex  = preload("res://assets/Objects/House.png")
+	var house      = Sprite2D.new()
+	house.texture  = house_tex
+	# House.png: take only the main house (left part, roughly 80x64 px)
+	house.region_enabled = true
+	house.region_rect = Rect2(0, 0, 80, 64)
+	house.scale    = Vector2(3, 3)
+	house.position = Vector2(-300, -200)
+	house.z_index  = 0
+	world_bg.add_child(house)
+
+	# Place maple trees around the edges
+	var tree_tex = preload("res://assets/Objects/Maple Tree.png")
+	# Maple Tree.png: large tree is roughly 32x48 in the sheet
+	var tree_positions = [
+		Vector2(-360, -300), Vector2(-360, -100), Vector2(-360, 100),
+		Vector2( 340, -300), Vector2( 340, -100), Vector2( 340, 100),
+		Vector2(-200, -300), Vector2(   0, -300), Vector2( 200, -300),
+	]
+	for pos in tree_positions:
+		var tree      = Sprite2D.new()
+		tree.texture  = tree_tex
+		tree.region_enabled = true
+		tree.region_rect = Rect2(32, 0, 32, 48)  # the full-grown tree frame
+		tree.scale    = Vector2(3, 3)
+		tree.position = pos
+		tree.z_index  = 1
+		world_bg.add_child(tree)
+
+func plant_crop(total_xp: int) -> void:
+	# All Crops.png = 416x288, individual crop sprites are 16x16
+	# Row 0 = strawberry stages, row 1 = tomato, row 2 = carrot, etc.
+	# Last column (col ~9-11) in each row = the fully ripe harvest sprite
+	var crop_tex = preload("res://assets/Objects/All Crops.png")
+	var crop      = Sprite2D.new()
+	crop.texture  = crop_tex
+	crop.region_enabled = true
+
+	# Pick which crop type based on XP (cycles every 50 XP)
+	var crop_row  = (total_xp / 50) % 9      # which crop type
+	var ripe_col  = 9                          # column ~9 = ripe fruit icon
+	crop.region_rect = Rect2(ripe_col * 16, crop_row * 16, 16, 16)
+	crop.scale    = Vector2(3, 3)  # 16*3 = 48px — clearly visible
+
+	# Snap to tilled-soil grid so crops look planted neatly
+	var grid_pos  = (player.global_position / 32.0).floor() * 32.0
+	crop.position = grid_pos + Vector2(0, 8)
+	crops_node.add_child(crop)
+
+	# Pop-in animation: grow from seed
+	crop.scale = Vector2.ZERO
+	var tween = get_tree().create_tween()
+	tween.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(crop, "scale", Vector2(3, 3), 0.8)
+
