@@ -45,8 +45,8 @@ DEFAULT_XP = 20
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    # Använder den moderna 3.5-modellen
-    model = genai.GenerativeModel('gemini-3.5-flash')
+    # Använder den snabba 1.5-modellen för gratis limit (1500 req/dag)
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
