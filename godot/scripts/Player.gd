@@ -1,75 +1,58 @@
 extends CharacterBody2D
 
-const SPEED = 160.0
-
-# Alex sprite sheets:
-# Idle: 128x96  = 4 cols x 3 rows (right, up, down)
-# Walk: 192x96  = 6 cols x 3 rows
-# Run:  256x96  = 8 cols x 3 rows
-
 @onready var sprite: Sprite2D = $Sprite2D
-
-var idle_tex  = preload("res://assets/Character/Idle.png")
-var walk_tex  = preload("res://assets/Character/Walk.png")
-
-# Row indices in the sheet (row 0 = right/east, row 1 = up, row 2 = down)
-const ROW_RIGHT = 0
-const ROW_UP    = 1
-const ROW_DOWN  = 2
-
-var anim_timer  : float = 0.0
-var cur_frame   : int   = 0
-var facing_row  : int   = ROW_DOWN
-var is_moving   : bool  = false
+var is_walking = false
+var path_queue: Array[Vector2] = []
+var final_callback: Callable
+var speed = 250.0
 
 func _ready() -> void:
-	sprite.hframes = 4
+	sprite.texture = preload("res://assets/Character/Walk.png")
+	sprite.hframes = 6
 	sprite.vframes = 3
-	sprite.texture = idle_tex
-	sprite.scale   = Vector2(2, 2)
-	sprite.frame   = 0
+	sprite.scale = Vector2(2.5, 2.5)
+	hide() # Börja gömd i huset
 
-func _physics_process(delta: float) -> void:
-	var dx = Input.get_axis("ui_left", "ui_right")
-	var dy = Input.get_axis("ui_up",   "ui_down")
-	var dir = Vector2(dx, dy).normalized()
-	is_moving = dir.length() > 0.1
+func _process(delta: float) -> void:
+	if not is_walking and path_queue.size() > 0:
+		is_walking = true
+	
+	if is_walking:
+		var target = path_queue[0]
+		var dir = (target - global_position).normalized()
+		var distance = global_position.distance_to(target)
+		
+		var move_dist = speed * delta
+		if move_dist >= distance:
+			global_position = target
+			path_queue.pop_front()
+			if path_queue.size() == 0:
+				is_walking = false
+				sprite.frame = (sprite.frame / sprite.hframes) * sprite.hframes 
+				if final_callback.is_valid():
+					final_callback.call()
+					final_callback = Callable()
+		else:
+			global_position += dir * move_dist
+			update_animation(dir)
 
-	# Work out facing direction
-	if dx < -0.1:
-		facing_row   = ROW_RIGHT
-		sprite.flip_h = true
-	elif dx > 0.1:
-		facing_row   = ROW_RIGHT
-		sprite.flip_h = false
-	elif dy < -0.1:
-		facing_row   = ROW_UP
-		sprite.flip_h = false
-	elif dy > 0.1:
-		facing_row   = ROW_DOWN
-		sprite.flip_h = false
+func update_animation(dir: Vector2) -> void:
+	var facing_row = 2 # Nedåt
+	sprite.flip_h = false
+	
+	if abs(dir.x) > abs(dir.y):
+		facing_row = 0 # Höger
+		if dir.x < 0:
+			sprite.flip_h = true
+	elif dir.y < 0:
+		facing_row = 1 # Uppåt
+		
+	var frame_time = int(Time.get_ticks_msec() / 120.0) % sprite.hframes
+	sprite.frame = (facing_row * sprite.hframes) + frame_time
 
-	# Switch texture and column count
-	if is_moving:
-		if sprite.texture != walk_tex:
-			sprite.texture = walk_tex
-			sprite.hframes = 6
-			cur_frame = 0
-		velocity = dir * SPEED
-	else:
-		if sprite.texture != idle_tex:
-			sprite.texture = idle_tex
-			sprite.hframes = 4
-			cur_frame = 0
-		velocity = velocity.move_toward(Vector2.ZERO, SPEED * 4 * delta)
-
-	move_and_slide()
-
-	# Animate frame
-	anim_timer += delta
-	var frame_time = 0.1 if is_moving else 0.22
-	if anim_timer >= frame_time:
-		anim_timer = 0.0
-		cur_frame  = (cur_frame + 1) % sprite.hframes
-		# Frame index = row * hframes + col
-		sprite.frame = facing_row * sprite.hframes + cur_frame
+func follow_path(points: Array, on_finished: Callable = Callable()) -> void:
+	show()
+	path_queue.clear()
+	for p in points:
+		path_queue.append(p)
+	final_callback = on_finished
